@@ -349,9 +349,9 @@ export async function generateText({
     maxSteps = 1,
     stop,
     customSystemPrompt,
-    // verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
-    // verifiableInferenceOptions,
-}: {
+}: // verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
+// verifiableInferenceOptions,
+{
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
@@ -504,8 +504,7 @@ export async function generateText({
     const max_context_length =
         modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
     const max_response_length =
-        modelConfiguration?.maxOutputTokens ||
-        modelSettings.maxOutputTokens;
+        modelConfiguration?.maxOutputTokens || modelSettings.maxOutputTokens;
     const experimental_telemetry =
         modelConfiguration?.experimental_telemetry ||
         modelSettings.experimental_telemetry;
@@ -956,7 +955,10 @@ export async function generateText({
                         experimental_telemetry: experimental_telemetry,
                     });
 
-                    response = ollamaResponse.replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
+                    response = ollamaResponse.replace(
+                        /<think>[\s\S]*?<\/think>\s*\n*/g,
+                        ""
+                    );
                 }
                 elizaLogger.debug("Received response from Ollama model.");
                 break;
@@ -1168,8 +1170,10 @@ export async function generateText({
                 // console.warn("veniceResponse:")
                 // console.warn(veniceResponse)
                 //rferrari: remove all text from <think> to </think>\n\n
-                response = veniceResponse
-                    .replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
+                response = veniceResponse.replace(
+                    /<think>[\s\S]*?<\/think>\s*\n*/g,
+                    ""
+                );
                 // console.warn(response)
 
                 // response = veniceResponse;
@@ -1303,7 +1307,7 @@ export async function generateText({
                         headers: {
                             "Content-Type": "application/json",
                             Authorization: `Bearer ${apiKey}`,
-                        }
+                        },
                     });
                     const secretAi = secretAiProvider(model);
 
@@ -1320,7 +1324,7 @@ export async function generateText({
                     response = secretAiResponse;
                 }
                 break;
-  
+
             case ModelProviderName.BEDROCK: {
                 elizaLogger.debug("Initializing Bedrock model.");
 
@@ -1332,7 +1336,7 @@ export async function generateText({
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
                     experimental_telemetry: experimental_telemetry,
-                    prompt: context
+                    prompt: context,
                 });
 
                 response = bedrockResponse;
@@ -1430,26 +1434,58 @@ export async function splitChunks(
 ): Promise<string[]> {
     elizaLogger.debug(`[splitChunks] Starting text split`);
 
-    const chunks = splitText(content, chunkSize, bleed);
+    if (!content) {
+        elizaLogger.warn("[splitChunks] Empty content provided");
+        return [];
+    }
 
-    elizaLogger.debug(`[splitChunks] Split complete:`, {
-        numberOfChunks: chunks.length,
-        averageChunkSize:
-            chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
-            chunks.length,
-    });
+    // Ensure reasonable chunk size and bleed values
+    chunkSize = Math.max(100, Math.min(chunkSize, 8000));
+    bleed = Math.max(0, Math.min(bleed, Math.floor(chunkSize / 2)));
 
-    return chunks;
+    try {
+        const chunks = splitText(content, chunkSize, bleed);
+
+        elizaLogger.debug(`[splitChunks] Split complete:`, {
+            numberOfChunks: chunks.length,
+            averageChunkSize:
+                chunks.length > 0
+                    ? chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
+                      chunks.length
+                    : 0,
+        });
+
+        return chunks;
+    } catch (error) {
+        elizaLogger.error("[splitChunks] Error splitting text:", error);
+        // Return single chunk if splitting fails
+        return [content];
+    }
 }
 
-export function splitText(content: string, chunkSize: number, bleed: number): string[] {
+export function splitText(
+    content: string,
+    chunkSize: number,
+    bleed: number
+): string[] {
+    if (!content) return [];
+    if (chunkSize <= 0) throw new Error("Chunk size must be positive");
+    if (bleed < 0) throw new Error("Bleed must be non-negative");
+    if (bleed >= chunkSize)
+        throw new Error("Bleed must be less than chunk size");
+
     const chunks: string[] = [];
     let start = 0;
 
     while (start < content.length) {
         const end = Math.min(start + chunkSize, content.length);
-        chunks.push(content.substring(start, end));
-        start = end - bleed; // Apply overlap
+        const chunk = content.substring(start, end);
+
+        if (chunk.length === 0) break; // Prevent empty chunks
+        chunks.push(chunk);
+
+        if (end >= content.length) break; // We've reached the end
+        start = end - bleed;
     }
 
     return chunks;
@@ -1709,7 +1745,9 @@ export const generateImage = async (
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
     if (!modelSettings) {
-        elizaLogger.warn("No model settings found for the image model provider.");
+        elizaLogger.warn(
+            "No model settings found for the image model provider."
+        );
         return { success: false, error: "No model settings available" };
     }
     const model = modelSettings.name;
@@ -1739,11 +1777,21 @@ export const generateImage = async (
                           return runtime.getSetting("SECRET_AI_API_KEY");
                       case ModelProviderName.NEARAI:
                           try {
-                            // Read auth config from ~/.nearai/config.json if it exists
-                            const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.nearai/config.json'), 'utf8'));
-                            return JSON.stringify(config?.auth);
+                              // Read auth config from ~/.nearai/config.json if it exists
+                              const config = JSON.parse(
+                                  fs.readFileSync(
+                                      path.join(
+                                          os.homedir(),
+                                          ".nearai/config.json"
+                                      ),
+                                      "utf8"
+                                  )
+                              );
+                              return JSON.stringify(config?.auth);
                           } catch (e) {
-                            elizaLogger.warn(`Error loading NEAR AI config. The environment variable NEARAI_API_KEY will be used. ${e}`);
+                              elizaLogger.warn(
+                                  `Error loading NEAR AI config. The environment variable NEARAI_API_KEY will be used. ${e}`
+                              );
                           }
                           return runtime.getSetting("NEARAI_API_KEY");
                       default:
@@ -2154,10 +2202,10 @@ export const generateObject = async ({
     schemaDescription,
     stop,
     mode = "json",
-    // verifiableInference = false,
-    // verifiableInferenceAdapter,
-    // verifiableInferenceOptions,
-}: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
+}: // verifiableInference = false,
+// verifiableInferenceAdapter,
+// verifiableInferenceOptions,
+GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
     if (!context) {
         const errorMessage = "generateObject context is empty";
         console.error(errorMessage);
@@ -2319,8 +2367,7 @@ async function handleOpenAI({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const endpoint =
         runtime.character.modelEndpointOverride || getEndpoint(provider);
-    const baseURL =
-        getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
+    const baseURL = getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
@@ -2439,7 +2486,7 @@ async function handleGoogle({
     mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const google = createGoogleGenerativeAI({apiKey});
+    const google = createGoogleGenerativeAI({ apiKey });
     return await aiGenerateObject({
         model: google(model),
         schema,
@@ -2662,7 +2709,7 @@ async function handleSecretAi({
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
-        }
+        },
     });
     const secretAi = secretAiProvider(model);
     return await aiGenerateObject({

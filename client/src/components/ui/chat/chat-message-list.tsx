@@ -1,9 +1,10 @@
 import * as React from "react";
 import { ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
-    scrollRef: React.RefObject<HTMLDivElement | null>;
+    scrollRef: React.MutableRefObject<HTMLDivElement | null>;
     isAtBottom: boolean;
     scrollToBottom: () => void;
     disableAutoScroll: () => void;
@@ -11,12 +12,34 @@ interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
-    ({ className, children, scrollRef, isAtBottom, scrollToBottom, disableAutoScroll, ...props }) => {
+    ({ className, children, scrollRef, isAtBottom, scrollToBottom, disableAutoScroll, ...props }, ref) => {
         return (
             <div className="relative w-full h-full">
                 <div
-                    className={`flex flex-col w-full h-full p-4 overflow-y-auto ${className}`}
-                    ref={scrollRef}
+                    className={cn("flex flex-col w-full h-full p-4 overflow-y-auto", className)}
+                    ref={(node) => {
+                        if (node) {
+                            // Only assign if node is not null
+                            if (typeof ref === 'function') {
+                                ref(node);
+                            } else if (ref) {
+                                ref.current = node;
+                            }
+                            if (scrollRef) {
+                                scrollRef.current = node;
+                            }
+                        } else {
+                            // Handle null case
+                            if (typeof ref === 'function') {
+                                ref(null);
+                            } else if (ref) {
+                                ref.current = null;
+                            }
+                            if (scrollRef) {
+                                scrollRef.current = null;
+                            }
+                        }
+                    }}
                     onWheel={disableAutoScroll}
                     onTouchMove={disableAutoScroll}
                     {...props}
@@ -26,9 +49,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
 
                 {!isAtBottom && (
                     <Button
-                        onClick={() => {
-                            scrollToBottom();
-                        }}
+                        onClick={scrollToBottom}
                         size="icon"
                         variant="outline"
                         className="absolute bottom-2 left-1/2 transform -translate-x-1/2 inline-flex rounded-full shadow-md"
