@@ -1,8 +1,9 @@
 import { Character, ModelProviderName } from "@elizaos/core";
 
+
 export const RookieClientInterface: Character = {
     name: "Maxwell 'Max' Quantum",
-    clients: [],
+    clients: ["twitter"],
     modelProvider: ModelProviderName.OPENROUTER,
     settings: {
         voice: {

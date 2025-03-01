@@ -245,10 +245,20 @@ create_character_template() {
 {
     "name": "$name",
     "clients": [],
-    "modelProvider": "anthropic",
+    "modelProvider": "openrouter",
     "settings": {
+        "ragKnowledge": false,
+        "secrets": {},
         "voice": {
-            "model": "en_GB-alan-medium"
+            "model": "en_US-stephen-medium"
+        },
+        "model": "google/gemini-2.0-flash-001",
+        "modelConfig": {
+            "maxInputTokens": 128000,
+            "maxOutputTokens": 8192,
+            "temperature": 0.7,
+            "frequency_penalty": 0.4,
+            "presence_penalty": 0.4
         }
     },
     "plugins": [],

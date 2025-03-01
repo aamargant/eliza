@@ -19,6 +19,13 @@ import {
     validateCharacterConfig,
 } from "@elizaos/core";
 import { defaultCharacter } from "./defaultCharacter.ts";
+import { RookieClientInterface } from "../rookieCharacter";
+import { ArchitectClientInterface } from "../architectCharacter";
+import { SimsaiClientInterface } from "../simsaiCharacter";
+import { C3POClientInterface } from "../c3poCharacter";
+import { CosmosHelperClientInterface } from "../cosmosHelperCharacter";
+import { DobbyClientInterface } from "../dobbyCharacter";
+import { SBFClientInterface } from "../sbfCharacter";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
@@ -351,8 +358,16 @@ export async function loadCharacters(
     }
 
     if (loadedCharacters.length === 0) {
-        elizaLogger.info("No characters found, using default character");
-        loadedCharacters.push(defaultCharacter);
+        elizaLogger.info("No characters found, using default characters");
+        loadedCharacters.push(
+            RookieClientInterface,
+            ArchitectClientInterface,
+            SimsaiClientInterface,
+            C3POClientInterface,
+            CosmosHelperClientInterface,
+            DobbyClientInterface,
+            SBFClientInterface
+        );
     }
 
     return loadedCharacters;
@@ -804,7 +819,15 @@ const startAgents = async () => {
     let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
     const charactersArg = args.characters || args.character;
-    let characters = [defaultCharacter];
+    let characters = [
+        RookieClientInterface,
+        ArchitectClientInterface,
+        SimsaiClientInterface,
+        C3POClientInterface,
+        CosmosHelperClientInterface,
+        DobbyClientInterface,
+        SBFClientInterface,
+    ];
 
     if (charactersArg || hasValidRemoteUrls()) {
         characters = await loadCharacters(charactersArg);

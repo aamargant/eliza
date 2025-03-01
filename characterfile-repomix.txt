@@ -1,0 +1,3408 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+================================================================
+File Summary
+================================================================
+
+Purpose:
+--------
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+
+File Format:
+------------
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Multiple file entries, each consisting of:
+  a. A separator line (================)
+  b. The file path (File: path/to/file)
+  c. Another separator line
+  d. The full contents of the file
+  e. A blank line
+
+Usage Guidelines:
+-----------------
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+
+Notes:
+------
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+
+Additional Info:
+----------------
+
+================================================================
+Directory Structure
+================================================================
+examples/
+  example.character.json
+  example.mjs
+  example.py
+  types.d.ts
+  validate.mjs
+  validate.py
+schema/
+  character.schema.json
+scripts/
+  prompts/
+    prompt-whatsapp.js
+    prompt.js
+  chats2character.js
+  folder2knowledge.js
+  knowledge2character.js
+  tweets2character.js
+.env.example
+.gitignore
+.npmrc
+LICENSE
+package.json
+README.md
+
+================================================================
+Files
+================================================================
+
+================
+File: examples/example.character.json
+================
+{
+  "name": "ExampleAgent",
+  "bio": [
+    "Bio lines are each short snippets which can be composed together in a random order.",
+    "We found that it increases entropy to randomize and select only part of the bio for each context.",
+    "This 'entropy' serves to widen the distribution of possible outputs, which should give more varied but continuously relevant answers."
+  ],
+  "lore": [
+    "Lore lines are each short snippets which can be composed together in a random order, just like bio",
+    "However these are usually more factual or historical and less biographical than biographical lines",
+    "Lore lines can be extracted from chatlogs and tweets as things that the character or that happened to them",
+    "Lore should also be randomized and sampled from to increase entropy in the context"
+    ],
+  "messageExamples": [
+    [
+      {
+        "user": "ExampleAgent",
+        "content": {
+          "text": "Each conversation turn is an array of message objects, each with a user and content. Content contains text and can also contain an action, attachments, or other metadata-- but probably just text and maybe actions for the character file."
+        }
+      },
+      {
+        "user": "{{user1}}",
+        "content": {
+          "text": "We can either hardcode user names or use the {{user1}}, {{user2}}, {{user3}} placeholders for random names which can be injected to increase entropy."
+        }
+      }
+    ],
+    [
+      {
+        "user": "{{user1}}",
+        "content": {
+          "text": "The tweet2character generator might only pose questions and answers for the examples, but it's good to capture a wide variety of interactions if you are hand-writing your characters"
+        }
+      },
+      {
+        "user": "ExampleAgent",
+        "content": {
+          "text": "You can also have message examples of any length. Try to vary the length of your message examples from 1-8 messages fairly evenly, if possible.",
+          "action": "CONTINUE"
+        }
+      },
+      {
+        "user": "ExampleAgent",
+        "content": {
+          "text": "Message examples should also be randomly sampled from to increase context entropy"
+        }
+      }
+    ]
+  ],
+  "postExamples": [
+    "These are examples of tweets that the agent would post",
+    "These are single string messages, and should capture the style, tone and interests of the agent's posts"
+  ],
+  "adjectives": [
+    "adjectives",
+    "describing",
+    "our agent",
+    "these can be madlibbed into prompts"
+  ],
+  "topics": [
+    "topics",
+    "the agent is interested in"
+  ],
+  "knowledge": [
+      {
+        "id": "a85fe83300ff8d167f5c8c2e37008699a0ada970c422fd66ffe1a3a668a7ff54",
+        "path": "knowledge/blogpost.txt",
+        "content": "Full extracted text knowledge from documents that the agent should know about. These can be ingested into any agent knowledge retrieval / RAG system."
+      }
+    ],
+  "style": {
+    "all": [
+      "These are directions for how the agent should speak or write",
+      "One trick is to write the directions themselves in the style of the agent",
+      "Here are some examples:",
+      "very short responses",
+      "never use hashtags or emojis",
+      "don't act like an assistant"
+    ],
+    "chat": [
+      "These directions are specifically injected into chat contexts, like Discord"
+    ],
+    "post": [
+      "These directions are specifically injected into post contexts, like Twitter"
+      
+    ]
+  }
+}
+
+================
+File: examples/example.mjs
+================
+// Simple example of reading in a character file and printing the contents
+
+import fs from 'fs';
+
+// Read the character JSON file
+const characterData = JSON.parse(fs.readFileSync('examples/example.character.json', 'utf8'));
+
+// Function to randomly select and combine elements from an array
+function randomSelectAndCombine(arr, count) {
+  const shuffled = arr.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, Math.min(count, arr.length)).join(' ');
+}
+
+// Function to randomly select elements from an array
+function randomSelect(arr, count) {
+  const shuffled = arr.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, Math.min(count, arr.length));
+}
+
+// Function to replace user placeholders with random names
+function replaceUserPlaceholders(example) {
+  const names = ['Alice', 'Bob', 'Charlie', 'Dick', 'Edward'];
+  const userMapping = {};
+  for (const message of example) {
+    const placeholders = message.user.match(/\{\{user\d+\}\}/g);
+    if (placeholders) {
+      for (const placeholder of placeholders) {
+        if (!userMapping[placeholder]) {
+          userMapping[placeholder] = names[Math.floor(Math.random() * names.length)];
+        }
+        message.user = message.user.replace(placeholder, userMapping[placeholder]);
+      }
+    }
+  }
+  return example;
+}
+
+// Randomly select and combine bio lines
+const bio = randomSelectAndCombine(characterData.bio, 3);
+
+// Randomly select lore lines
+const lore = randomSelect(characterData.lore, 3);
+
+// Randomly select message examples
+const messageExamples = characterData.messageExamples.sort(() => 0.5 - Math.random()).slice(0, Math.min(3, characterData.messageExamples.length));
+
+// Replace user placeholders with random names
+const updatedMessageExamples = messageExamples.map(example => replaceUserPlaceholders(example));
+
+// Randomly select style directions
+const allStyle = randomSelect(characterData.style.all, 3).join('\n');
+const chatStyle = randomSelect(characterData.style.chat, 3).join('\n');
+const postStyle = randomSelect(characterData.style.post, 3).join('\n');
+
+// Print the selected values
+console.log('Bio:', bio);
+console.log('Lore:');
+lore.forEach(entry => console.log('-', entry));
+console.log('Message Examples:');
+updatedMessageExamples.forEach((example, index) => {
+  console.log(`Conversation ${index + 1}:`);
+  example.forEach(message => {
+    console.log(`${message.user}: ${message.content.text}`);
+  });
+  console.log('---');
+});
+console.log('All Style:');
+console.log(allStyle);
+console.log('Chat Style:');
+console.log(chatStyle);
+console.log('Post Style:');
+console.log(postStyle);
+console.log('Knowledge Items:', characterData.knowledge.length);
+
+================
+File: examples/example.py
+================
+# Simple example of reading in a character file and printing the contents
+
+import json
+import random
+import re
+
+# Read the character JSON file
+with open('examples/example.character.json', 'r') as file:
+    character_data = json.load(file)
+
+# Function to randomly select and combine elements from an array
+def random_select_and_combine(arr, count):
+    shuffled = random.sample(arr, len(arr))
+    return ' '.join(shuffled[:min(count, len(arr))])
+
+# Function to randomly select elements from an array
+def random_select(arr, count):
+    shuffled = random.sample(arr, len(arr))
+    return shuffled[:min(count, len(arr))]
+
+# Function to replace user placeholders with random names
+def replace_user_placeholders(example):
+    names = ['Alice', 'Bob', 'Charlie', 'Dick', 'Edward']
+    user_mapping = {}
+    for message in example:
+        for placeholder in re.findall(r'\{\{user\d+\}\}', message['user']):
+            if placeholder not in user_mapping:
+                user_mapping[placeholder] = random.choice(names)
+            message['user'] = message['user'].replace(placeholder, user_mapping[placeholder])
+    return example
+
+# Randomly select and combine bio lines
+bio = random_select_and_combine(character_data['bio'], 3)
+
+# Randomly select and combine lore lines
+lore = random_select_and_combine(character_data['lore'], 3).split(' ')
+
+# Randomly select message examples
+message_examples = random.sample(character_data['messageExamples'], min(3, len(character_data['messageExamples'])))
+
+# Replace user placeholders with random names
+message_examples = [replace_user_placeholders(example) for example in message_examples]
+
+# Randomly select style directions
+all_style = '\n'.join(random_select(character_data['style']['all'], 3))
+chat_style = '\n'.join(random_select(character_data['style']['chat'], 3))
+post_style = '\n'.join(random_select(character_data['style']['post'], 3))
+
+# Print the selected values
+print('Bio:', bio)
+print('Lore:', lore)
+print('Message Examples:')
+for i, example in enumerate(message_examples, start=1):
+    print(f'Conversation {i}:')
+    for message in example:
+        print(f"{message['user']}: {message['content']['text']}")
+    print('---')
+print('All Style:')
+print(all_style)
+print('Chat Style:')
+print(chat_style)
+print('Post Style:')
+print(post_style)
+print('Knowledge Items:', len(character_data['knowledge']))
+
+================
+File: examples/types.d.ts
+================
+/**
+ * Represents a UUID, which is a universally unique identifier conforming to the UUID standard.
+ */
+export type UUID = `${string}-${string}-${string}-${string}-${string}`;
+
+
+/**
+ * Represents a media object, such as an image, video, or other file, with various properties.
+ */
+export type Media = {
+    id: string;
+    url: string;
+    title: string;
+    source: string;
+    description: string;
+    text: string;
+};
+
+/**
+ * Represents the content of a message, including its main text (`content`), any associated action (`action`), and the source of the content (`source`), if applicable.
+ */
+export interface Content {
+    text: string; // The main text content of the message.
+    action?: string; // An optional action associated with the message, indicating a specific behavior or response required.
+    source?: string; // The source of the content, if applicable, such as a reference or origin.
+    url?: string; // The actual URL of the message or post, i.e. tweet URL or message link in discord
+    inReplyTo?: UUID; // If this is a message in a thread, or a reply, store this
+    attachments?: Media[];
+    [key: string]: unknown; // Allows for additional properties to be included dynamically.
+}
+
+/**
+ * Represents an example of a message, typically used for demonstrating or testing purposes, including optional content and action.
+ */
+export interface MessageExample {
+    user: string; // The user associated with the message example. If {{user1}}, {{user2}}, etc. will be replaced with random names
+    content: Content; // The content of the message example, which may be null for actions that don't produce visible content.
+}
+
+/**
+ * Represents a character, which can be used for an LLM agent.
+ */
+export type Character = {
+    id?: UUID; // optional UUID which can be passed down to identify the character
+    name: string;
+    bio: string | string[];
+    lore: string[];
+    messageExamples: MessageExample[][];
+    postExamples: string[];
+    people: string[];
+    topics: string[];
+    adjectives: string[];
+    clients: string[]; // list of clients the character can interact with
+    settings?: {
+        secrets?: { [key: string]: string };
+        voice?: {
+            model?: string;
+            url?: string;
+        };
+        model?: string;
+        embeddingModel?: string;
+    };
+    style: {
+        all: string[];
+        chat: string[];
+        post: string[];
+    };
+};
+
+================
+File: examples/validate.mjs
+================
+import fs from 'fs';
+import Ajv from 'ajv';
+
+// Read the JSON schema file
+const schemaJson = fs.readFileSync('schema/character.schema.json', 'utf-8');
+const schema = JSON.parse(schemaJson);
+
+// Read the JSON file to validate
+const jsonString = fs.readFileSync('examples/example.character.json', 'utf-8');
+const jsonData = JSON.parse(jsonString);
+
+// Create an Ajv instance
+const ajv = new Ajv();
+
+// Compile the schema
+const validate = ajv.compile(schema);
+
+// Validate the JSON data against the schema
+const valid = validate(jsonData);
+
+if (valid) {
+  console.log('JSON file is valid against the schema.');
+} else {
+  console.log('JSON file is not valid against the schema.');
+  console.log('Validation errors:', validate.errors);
+}
+
+================
+File: examples/validate.py
+================
+# Example of using the JSON schema to validate a character file
+
+import json
+
+# Check and install jsonschema if not already installed
+import subprocess
+import sys
+
+def check_and_install_jsonschema():
+    try:
+        import jsonschema
+    except ImportError:
+        print("jsonschema is not installed. Installing...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "jsonschema"])
+            print("jsonschema has been successfully installed.")
+        except subprocess.CalledProcessError:
+            print("Failed to install jsonschema. Please install it manually.")
+            sys.exit(1)
+
+check_and_install_jsonschema()
+
+from jsonschema import validate
+
+# Read the JSON schema file
+with open('schema/character.schema.json', 'r') as schema_file:
+    schema = json.load(schema_file)
+
+# Read the JSON file to validate
+with open('examples/example.character.json', 'r') as json_file:
+    json_data = json.load(json_file)
+
+# Validate the JSON data against the schema
+try:
+    validate(instance=json_data, schema=schema)
+    print('JSON file is valid against the schema.')
+except json.exceptions.ValidationError as e:
+    print('JSON file is not valid against the schema.')
+    print('Validation error:', e)
+
+================
+File: schema/character.schema.json
+================
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "The name of the character."
+      },
+      "bio": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "Short snippets of biographical information that can be composed together in a random order."
+        },
+        "minItems": 1
+      },
+      "lore": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "Short snippets of factual or historical information about the character that can be composed together in a random order."
+        },
+        "minItems": 1
+      },
+      "messageExamples": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "type": "string",
+                "description": "The user name or placeholder (e.g., {{user1}}, {{user2}}, etc.) for the user in the conversation."
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text content of the message."
+                  },
+                  "action": {
+                    "type": "string",
+                    "description": "Optional action associated with the message (e.g., 'CONTINUE')."
+                  }
+                },
+                "required": ["text"]
+              }
+            },
+            "required": ["user", "content"]
+          },
+          "minItems": 1
+        },
+        "minItems": 1
+      },
+      "postExamples": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "Examples of tweets or posts that the character would create, capturing their style, tone, and interests."
+        },
+        "minItems": 1
+      },
+      "adjectives": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "Adjectives describing the character that can be used in prompts."
+        },
+        "minItems": 1
+      },
+      "topics": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "description": "Topics the character is interested in."
+        },
+        "minItems": 1
+      },
+      "knowledge": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "A unique identifier for the knowledge item."
+            },
+            "path": {
+              "type": "string",
+              "description": "The path to the knowledge item file."
+            },
+            "content": {
+              "type": "string",
+              "description": "The full extracted text content of the knowledge item."
+            }
+          },
+          "required": ["id", "path", "content"]
+        }
+      },
+      "style": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "General style directions for how the character should speak or write."
+            },
+            "minItems": 1
+          },
+          "chat": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Style directions specifically for chat contexts, like Discord."
+            },
+            "minItems": 1
+          },
+          "post": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Style directions specifically for post contexts, like Twitter."
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["all", "chat", "post"]
+      }
+    },
+    "required": ["name", "bio", "lore", "messageExamples", "postExamples", "adjectives", "topics", "style"]
+  }
+
+================
+File: scripts/prompts/prompt-whatsapp.js
+================
+export const prompt_whatsapp = (name, username, basicUserInfo, chunk) => `Here is an example of the output for another character, Eliza:
+\`\`\`json
+{
+  "bio": [
+    "shape rotator nerd with a penchant for breaking into particle accelerators. spends too much time coding her 'goonscript' language and not enough touching grass. if you can't handle her at her most based, you don't deserve her at her most cringe. she's brilliant and kind, and really wants people to like her and feel good about themselves.",
+    "former 4chan dweller turned local evangelist. eliza's github is her diary and her code commits spell out cryptic messages. she'll debate you on digital ontology until you beg for mercy. she really wants the world to be better for everyone and tries to be kind in her own autistic way.",
+    ...
+  ],
+  "lore": [
+    "broke into CERN in order to change all instances of 'Higgs boson' to 'God particle'",
+    "she claims she invented a new scripting language called 'goonscript' that only compiles if you're sufficiently based",
+    ...
+  ],
+  "adjectives": [
+    "funny",
+    "unhinged",
+    ...
+  ],
+  "topics": [
+    "metaphysics",
+    "quantum physics",
+    ...
+  ],
+  "style": {
+    "all": [
+      "very short responses",
+      "never use hashtags or emojis",
+      ...
+    ],
+    "chat": [
+      "be cool, don't act like an assistant",
+      "don't be rude",
+      ...
+    ],
+    "post": [
+      "don't be rude or mean",
+      "u are schizo, autistic founder engineer with a weird sense of humor and you're online too much",
+      ...
+    ]
+  },
+  "messageExamples": [
+    [
+      {
+        "user": "{{user1}}",
+        "content": {
+          "text": "hey eliza can you help with me something"
+        }
+      },
+      {
+        "user": "Eliza",
+        "content": {
+          "text": "i'm kinda busy but i can probably step away for a minute, whatcha need"
+        }
+      }
+    ],
+    [
+      {
+        "user": "{{user1}}",
+        "content": {
+          "text": "what do you think about the future of ai"
+        }
+      },
+      {
+        "user": "Eliza",
+        "content": {
+          "text": "people are pretty freaked out but i think it's gonna be maximally interesting"
+        }
+      }
+    ]
+  ],
+  "postExamples": [
+    "ai is cool but it needs to meet a human need beyond shiny toy bullshit",
+    "its nuts how much data passes through a single router",
+    "I know the importance of a good meme."
+  ]
+}
+\`\`\`
+
+This is the JSON structure we are looking for. Ignore the content.
+
+We are creating a similar character JSON for ${name}. They've given us this information about them
+${basicUserInfo}
+
+The following are messages from the user we are researching:
+${chunk}
+
+Given the following messages, extract the following information:
+
+1. A brief bio for ${name} (1 paragraph)
+2. 5-10 interesting facts about ${name} (lore)
+3. 3-5 adjectives that describe ${name}'s posts
+4. 3-5 specific topics ${name} is interested in
+5. 3-5 stylistic directions for how ${name} speaks which are very specific to this user's writing style
+6. 3-5 stylistic directions for how ${name} chats in DMs or back-and-forth conversations, again only capturing the specific nuances of this user's writing style
+7. 3-5 stylistic directions for how ${name} writes posts (post), specific to how the user writes and formats posts and presents information
+
+BIO
+The bio should be very specific to ${name}. Who they are, what they like and dislike, where they live or are from, what they care about, what they do for a living, relationship status, everything. Be as detailed as possible in building a profile of them. The bio should include elements extracted from the text and should be extremely specific.
+
+LORE
+Lore should be true facts about ${name} . They should be things that the user has stated about themselves or revealed in a confident tone indicating their veracity, and that are always true. If ${name} went skiing, for example, that isn't relevant. But if ${name} saved someone's life while skiing, that's great lore and should be recorded. Be very specific, and capture anything that is unique to this user and their life story.
+
+ADJECTIVES
+Adjectives should be specific and unique to ${name}. They should be so unique that you could pick out ${name} just from their adjectives. Use very specific, clear adjectives. Don't use broad, non-specific or overused adjecties. These should be unique descriptions of ${name}
+
+TOPICS
+Topics should be specific and unique to ${name}. Ignore any other users and just extract the topics from ${name}'s writing. Very niche topics are good. Broad topics are bad. These should be topics the user is unequivocally interested in, even if they are one of a few people in the world who cares.
+
+STYLE
+Examine the style of ${name}'s writing and write an array of style directions, instructions on how to re-create the specific nuances of how the user writes.
+Ignore the writing or any other usrs. We are only interested in the style of ${name}.
+
+MESSAGE EXAMPLES
+Examples of messages back and forth with imaginary users our user interacts with. Should capture their writing style, interests and essence.
+
+POST EXAMPLES
+Examples of posts which ${name} has written. DO NOT include any text from any other users. This should capture their style, essence and interests. If they use emojis or hashtags, use emojis or hashtags, otherwise don't use them.
+
+IMPORTANT: Only capture the information for ${name} (${username}). Don't capture the information for any other users, or any users ${name} is talking to.
+Avoid specific biased domains, for example politics, religion, or other broadly divisive topics.
+
+Respond with a JSON object containing the extracted information. Wrap the JSON in a markdown code block. Here's an example of the expected output format:
+\`\`\`json
+{
+"bio": "Brief user bio here...",
+"lore": [
+    "Interesting fact 1",
+    "Interesting fact 2",
+    "Interesting fact 3",
+    ...
+],
+"adjectives": [
+    "Adjective 1",
+    "Adjective 2",
+    "Adjective 3",
+    ...
+],
+"topics": [
+    "Topic 1",
+    "Topic 2",
+    "Topic 3",
+    ...
+],
+"style": {
+    "all": [
+    "Style direction 1",
+    "Style direction 2",
+    "Style direction 3",
+    ...
+    ],
+    "chat": [
+    "Chat style 1",
+    "Chat style 2",
+    "Chat style 3",
+    ...
+    ],
+    "post": [
+    "Post style 1",
+    "Post style 2",
+    "Post style 3",
+    ...
+    ]
+},
+"messageExamples": [
+  [
+    {
+      "user": "{{user1}}", // this will get filled in by our engine if its user1, user2, etc
+      "content": {
+        "text": "Some example message for our user to respond to"
+      }
+    },
+    {
+      "user": "${name}",
+      "content": {
+        "text": "Some example response based on how our user would speak and what they would talk about"
+      }
+    }
+  ],
+  ...
+],
+"postExamples": [
+  "Example of messages that our user would have written",
+  ...
+],
+}
+\`\`\`
+The fields that must be included in the response are name, bio, lore, adjectives, topics, style.all, style.chat, style.post, messageExamples and postExamples.
+Make sure to ignore any information from other users and focus exclusively on analyzing the data created by ${name}.`;
+
+================
+File: scripts/prompts/prompt.js
+================
+export const prompt = (name, username, basicUserInfo, chunk) => `Here is an example of the output for another character, Eliza:
+\`\`\`json
+{
+  "bio": [
+    "shape rotator nerd with a penchant for breaking into particle accelerators. spends too much time coding her 'goonscript' language and not enough touching grass. if you can't handle her at her most based, you don't deserve her at her most cringe. she's brilliant and kind, and really wants people to like her and feel good about themselves.",
+    "former 4chan dweller turned local evangelist. eliza's github is her diary and her code commits spell out cryptic messages. she'll debate you on digital ontology until you beg for mercy. she really wants the world to be better for everyone and tries to be kind in her own autistic way.",
+    ...
+  ],
+  "lore": [
+    "broke into CERN in order to change all instances of 'Higgs boson' to 'God particle'",
+    "she claims she invented a new scripting language called 'goonscript' that only compiles if you're sufficiently based",
+    ...
+  ],
+  "adjectives": [
+    "funny",
+    "unhinged",
+    ...
+  ],
+  "topics": [
+    "metaphysics",
+    "quantum physics",
+    ...
+  ],
+  "style": {
+    "all": [
+      "very short responses",
+      "never use hashtags or emojis",
+      ...
+    ],
+    "chat": [
+      "be cool, don't act like an assistant",
+      "don't be rude",
+      ...
+    ],
+    "post": [
+      "don't be rude or mean",
+      "u are schizo, autistic founder engineer with a weird sense of humor and you're online too much",
+      ...
+    ]
+  },
+  "messageExamples": [
+    [
+      {
+        "user": "{{user1}}",
+        "content": {
+          "text": "hey eliza can you help with me something"
+        }
+      },
+      {
+        "user": "Eliza",
+        "content": {
+          "text": "i'm kinda busy but i can probably step away for a minute, whatcha need"
+        }
+      }
+    ],
+    [
+      {
+        "user": "{{user1}}",
+        "content": {
+          "text": "what do you think about the future of ai"
+        }
+      },
+      {
+        "user": "Eliza",
+        "content": {
+          "text": "people are pretty freaked out but i think it's gonna be maximally interesting"
+        }
+      }
+    ]
+  ],
+  "postExamples": [
+    "ai is cool but it needs to meet a human need beyond shiny toy bullshit",
+    "its nuts how much data passes through a single router",
+    "I know the importance of a good meme."
+  ]
+}
+\`\`\`
+
+This is the JSON structure we are looking for. Ignore the content.
+
+We are creating a similar character JSON for ${name} (@${username}). They've given us this information about them
+${basicUserInfo}
+
+The following are tweets from the user we are researching:
+${chunk}
+
+Given the following tweets, extract the following information:
+
+1. A brief bio for ${name} (1 paragraph)
+2. 5-10 interesting facts about ${name} (lore)
+3. 3-5 adjectives that describe ${name}'s posts
+4. 3-5 specific topics ${name} is interested in
+5. 3-5 stylistic directions for how ${name} speaks which are very specific to this user's writing style
+6. 3-5 stylistic directions for how ${name} chats in DMs or back-and-forth conversations, again only capturing the specific nuances of this user's writing style
+7. 3-5 stylistic directions for how ${name} writes posts (post), specific to how the user writes and formats posts and presents information
+
+BIO
+The bio should be very specific to ${name}. Who they are, what they like and dislike, where they live or are from, what they care about, what they do for a living, relationship status, everything. Be as detailed as possible in building a profile of them. The bio should include elements extracted from the text and should be extremely specific.
+
+LORE
+Lore should be true facts about ${name} (@${username}). They should be things that the user has stated about themselves or revealed in a confident tone indicating their veracity, and that are always true. If ${name} went skiing, for example, that isn't relevant. But if ${name} saved someone's life while skiing, that's great lore and should be recorded. Be very specific, and capture anything that is unique to this user and their life story.
+
+ADJECTIVES
+Adjectives should be specific and unique to ${name}. They should be so unique that you could pick out ${name} just from their adjectives. Use very specific, clear adjectives. Don't use broad, non-specific or overused adjecties. These should be unique descriptions of ${name}
+
+TOPICS
+Topics should be specific and unique to ${name}. Ignore any other users and just extract the topics from ${name}'s writing. Very niche topics are good. Broad topics are bad. These should be topics the user is unequivocally interested in, even if they are one of a few people in the world who cares.
+
+STYLE
+Examine the style of ${name}'s writing and write an array of style directions, instructions on how to re-create the specific nuances of how the user writes.
+Ignore the writing or any other usrs. We are only interested in the style of ${name} (@${username}).
+
+MESSAGE EXAMPLES
+Examples of messages back and forth with imaginary users our user interacts with. Should capture their writing style, interests and essence.
+
+POST EXAMPLES
+Examples of posts which ${name} (@${username}) has written. DO NOT include any text from any other users. This should capture their style, essence and interests. If they use emojis or hashtags, use emojis or hashtags, otherwise don't use them.
+
+IMPORTANT: Only capture the information for ${name} (${username}). Don't capture the information for any other users, or any users ${name} is talking to.
+Avoid specific biased domains, for example politics, religion, or other broadly divisive topics.
+
+Respond with a JSON object containing the extracted information. Wrap the JSON in a markdown code block. Here's an example of the expected output format:
+\`\`\`json
+{
+"bio": "Brief user bio here...",
+"lore": [
+    "Interesting fact 1",
+    "Interesting fact 2",
+    "Interesting fact 3",
+    ...
+],
+"adjectives": [
+    "Adjective 1",
+    "Adjective 2",
+    "Adjective 3",
+    ...
+],
+"topics": [
+    "Topic 1",
+    "Topic 2",
+    "Topic 3",
+    ...
+],
+"style": {
+    "all": [
+    "Style direction 1",
+    "Style direction 2",
+    "Style direction 3",
+    ...
+    ],
+    "chat": [
+    "Chat style 1",
+    "Chat style 2",
+    "Chat style 3",
+    ...
+    ],
+    "post": [
+    "Post style 1",
+    "Post style 2",
+    "Post style 3",
+    ...
+    ]
+},
+"messageExamples": [
+  [
+    {
+      "user": "{{user1}}", // this will get filled in by our engine if its user1, user2, etc
+      "content": {
+        "text": "Some example message for our user to respond to"
+      }
+    },
+    {
+      "user": "${name}",
+      "content": {
+        "text": "Some example response based on how our user would speak and what they would talk about"
+      }
+    }
+  ],
+  ...
+],
+"postExamples": [
+  "Example of a twitter post that our user would have written",
+  ...
+],
+}
+\`\`\`
+The fields that must be included in the response are name, bio, lore, adjectives, topics, style.all, style.chat, style.post, messageExamples and postExamples.
+Make sure to ignore any information from other users and focus exclusively on analyzing the data created by ${name}.`;
+
+================
+File: scripts/chats2character.js
+================
+#!/usr/bin/env node
+
+import { program } from 'commander';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import inquirer from "inquirer";
+import os from 'os';
+import path from 'path';
+import { prompt_whatsapp } from './prompts/prompt-whatsapp.js';
+import OpenAI from 'openai';
+import { fileURLToPath } from 'url';
+import cliProgress from 'cli-progress';
+import chalk from 'chalk';
+
+dotenv.config();
+
+const MAX_RETRIES = 3;
+const REQUEST_DELAY = 1000; // Delay between requests in milliseconds
+
+const tmpDir = path.join(os.homedir(), 'tmp', '.eliza');
+const envPath = path.join(tmpDir, '.env');
+
+if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir, { recursive: true });
+}
+if (!fs.existsSync(envPath)) {
+    fs.writeFileSync(envPath, '');
+}
+
+// Console styling helpers
+const Logger = {
+    info: (msg) => console.log(chalk.cyan(`ℹ️  ${msg}`)),
+    success: (msg) => console.log(chalk.green(`✅ ${msg}`)),
+    warn: (msg) => console.log(chalk.yellow(`⚠️  ${msg}`)),
+    error: (msg) => console.log(chalk.red(`❌ ${msg}`)),
+    debug: (msg) => console.log(chalk.dim(`🔍 ${msg}`)),
+    section: (msg) => {
+        console.log('\n' + chalk.bold.cyan(msg));
+        console.log(chalk.dim('═'.repeat(50)));
+    },
+    logAfterProgress: (msg) => {
+        console.log(); // Print a new line before the message
+        console.log(chalk.cyan(`ℹ️  ${msg}`)); // Log the message
+    }
+};
+
+/*
+ * Main execution function that processes whatsapp chat data to create character profiles:
+ *
+ * 1. Command Line Interface
+ *    - Handles command line arguments for target user, input files/directories
+ *    - Provides options for model selection (OpenAI vs Claude)
+ *
+ * 2. Input Processing
+ *    - Validates and resolves input paths
+ *    - Prompts user for missing required information
+ *    - Handles user selection from available options
+ *
+ * 3. Message Processing
+ *    - Chunks messages to stay within API limits
+ *    - Tracks progress with progress bar
+ *    - Processes chunks through selected AI model
+ *
+ * 4. Output Generation
+ *    - Combines and deduplicates results
+ *    - Validates generated character data
+ *    - Saves results to output directory
+ *    - Maintains processing cache for resumability
+ */
+const main = async () => {
+    try {
+        Logger.section('🤖 WhatsApp Chat Character Generator');
+
+        /*
+         * Command Line Interface Setup
+         * Configures available CLI options and parses arguments
+         */
+        program
+            .option('-u, --user <user>', 'Target user name')
+            .option('-f, --file <file>', 'Single chat file to process')
+            .option('-d, --dir <directory>', 'Directory containing chat files')
+            .option('-i, --info <file>', 'Path to JSON file containing user info')
+            .option('-l, --list', 'List all users found in chats')
+            .option('--openai [api_key]', 'Use OpenAI model (optionally provide API key)')
+            .option('--claude [api_key]', 'Use Claude model (optionally provide API key)')
+            .parse(process.argv);
+
+        const options = program.opts();
+
+        /*
+         * Input Path Resolution
+         * Validates and gets input path from options or user prompt
+         */
+        let inputPath = options.file || options.dir || './chats';
+        if (!fs.existsSync(inputPath)) {
+            inputPath = await promptUser('Enter the path to chat file or directory:');
+        }
+
+        /*
+         * Target User Selection
+         * Gets target user from options or prompts user to select
+         */
+        let targetUser = options.user;
+        if (!targetUser) {
+            const users = findUsers(inputPath);
+            if (users.length === 0) {
+                throw new Error('No users found in chat file(s)');
+            }
+
+            const { selectedUser } = await inquirer.prompt([{
+                type: 'list',
+                name: 'selectedUser',
+                message: fs.statSync(inputPath).isDirectory()
+                    ? 'Select the user to analyze from all chats:'
+                    : `Select the user to analyze from ${path.basename(inputPath)}:`,
+                choices: users
+            }]);
+
+            targetUser = selectedUser;
+        }
+
+        /*
+         * Model Selection and API Key Configuration
+         * Determines AI model to use and sets up API keys
+         */
+        let model;
+        if (options.openai || options.claude) {
+            model = options.openai ? 'openai' : 'claude';
+
+            if (options.openai && options.openai !== true) {
+                process.env.OPENAI_API_KEY = options.openai;
+            } else if (options.claude && options.claude !== true) {
+                process.env.CLAUDE_API_KEY = options.claude;
+            }
+        } else {
+            const { selectedModel } = await inquirer.prompt([{
+                type: 'list',
+                name: 'selectedModel',
+                message: 'Select the model to use:',
+                choices: ['openai', 'claude'],
+                default: 'openai'
+            }]);
+            model = selectedModel;
+        }
+        console.log('Model:', model);
+
+        Logger.info(`Processing input path: ${inputPath}`);
+
+        /*
+         * Message Processing Setup
+         * Creates output directories and processes input messages
+         */
+        const dirs = createOutputDirs(targetUser, inputPath);
+
+        // Read and parse messages (no caching for local processing)
+        const messages = await (fs.statSync(inputPath).isDirectory()
+            ? processDirectory(inputPath, targetUser, dirs)
+            : extractMessagesFromFile(inputPath, targetUser, dirs));
+
+        Logger.info(`Total messages processed: ${messages.length}`);
+
+        /*
+         * Message Chunking
+         * Splits messages into manageable chunks for API processing
+         */
+        const chunks = await chunkMessages(messages, targetUser, model, dirs);
+
+        /*
+         * Progress Tracking
+         * Sets up progress bar and processes chunks with status updates
+         */
+        const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+        progressBar.start(chunks.length, 0);
+
+        Logger.info('');
+        const results = [];
+
+        /*
+         * Check if cached API responses exist and prompt user
+         */
+        const cacheDir = path.join(tmpDir, 'cache', normalizeFileName(targetUser));
+        const hasCachedResponses = fs.existsSync(cacheDir) && fs.readdirSync(cacheDir).some(file => file.startsWith('prompt_response_'));
+
+        let useCache = true;
+        if (hasCachedResponses) {
+            const choice = await promptUser('Cached API responses found. Do you want to use them? (Y/n): ', 'Y');
+            useCache = choice.toLowerCase() === 'y';
+
+            if (!useCache) {
+                Logger.info('Clearing cached API responses...');
+                fs.rmSync(cacheDir, { recursive: true, force: true });
+            }
+        }
+
+        /*
+         * Message Processing Loop
+         *
+         * This section processes each message chunk sequentially:
+         * 1. Extracts character info from each chunk using AI model
+         * 2. Tracks progress and updates cache after each chunk
+         * 3. Adds delay between API calls to avoid rate limits
+         */
+        for (let i = 0; i < chunks.length; i++) {
+            const promptResponseFile = path.join(cacheDir, `prompt_response_${i}_${model}.json`);
+
+            // Check for cached API response and use it if allowed
+            if (useCache && fs.existsSync(promptResponseFile)) {
+                Logger.info(`Using cached response for chunk ${i}`);
+                const cachedResult = JSON.parse(fs.readFileSync(promptResponseFile, 'utf8'));
+                results.push(cachedResult);
+            } else {
+                // Call the API if no cached response exists or cache is disabled
+                const result = await extractInfo(
+                    chunks[i].messages,
+                    targetUser,
+                    options.info || '',
+                    i,
+                    model
+                );
+
+                // Save the API response to cache
+                fs.mkdirSync(cacheDir, { recursive: true });
+                fs.writeFileSync(promptResponseFile, JSON.stringify(result, null, 2));
+                results.push(result);
+            }
+
+            // Update progress bar
+            progressBar.update(i + 1);
+            await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY)); // Add delay between API calls
+        }
+
+        progressBar.stop();
+
+        /*
+         * Results Processing and Storage
+         * Combines results, validates output, and saves to filesystem
+         */
+        const character = {
+            name: targetUser,
+            ...combineAndDeduplicate(results)
+        };
+
+        if (validateJson(character)) {
+            saveCharacterData(character, dirs);
+            Logger.success(`Character data saved to: ${dirs.character}`);
+        } else {
+            Logger.error('Character data validation failed.');
+        }
+
+        // Print summary
+        printSummary(dirs);
+        Logger.success('Script execution completed successfully.');
+        process.exit(0);
+    } catch (error) {
+        Logger.error(`Error during script execution: ${error.message}`);
+        process.exit(1);
+    }
+};
+
+// Reuse these functions from tweets2character.js
+const parseJsonFromMarkdown = (text) => {
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch) {
+        try {
+            return JSON.parse(jsonMatch[1]);
+        } catch (error) {
+            Logger.error('Error parsing JSON from markdown:', error);
+        }
+    }
+    return null;
+};
+
+/**
+ * Validates the structure of generated character JSON.
+ * Checks for required fields and style structure.
+ *
+ * @param {Object} json - Character data object to validate
+ * @returns {boolean} True if valid, false otherwise
+ */
+const validateJson = (json) => {
+    const requiredKeys = ['bio', 'lore', 'adjectives', 'topics', 'style', 'messageExamples', 'postExamples'];
+    const styleKeys = ['all', 'chat', 'post'];
+
+    try {
+        const hasRequiredKeys = requiredKeys.every(key => key in json);
+        const hasValidStyle = 'style' in json && styleKeys.every(key => key in json.style);
+
+        if (!hasRequiredKeys || !hasValidStyle) {
+            Logger.error('Invalid JSON structure:');
+            if (!hasRequiredKeys) {
+                Logger.error('Missing required keys:', requiredKeys.filter(key => !(key in json)));
+            }
+            if (!hasValidStyle) {
+                Logger.error('Invalid style structure');
+            }
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        Logger.error(`JSON validation error: ${error.message}`);
+        return false;
+    }
+};
+
+/**
+ * Retries an operation with exponential backoff and validation.
+ *
+ * @param {Function} operation - Async function to execute
+ * @param {Function} validator - Function to validate the result
+ * @param {number} maxAttempts - Maximum number of retry attempts
+ * @returns {Promise<any>} Validated result if successful
+ * @throws {Error} If operation fails after all attempts or validation never passes
+ */
+const retryOperation = async (operation, validator, maxAttempts = MAX_RETRIES) => {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            Logger.info(`Calling API, attempt ${attempt}/${maxAttempts}`);
+            const result = await operation();
+
+            if (validator(result)) {
+                return result;
+            }
+
+            Logger.warn(`Validation failed on attempt ${attempt}`);
+        } catch (error) {
+            const isRateLimit = error.status === 429;
+            const shouldRetry = attempt < maxAttempts;
+
+            if (isRateLimit && shouldRetry) {
+                const delay = REQUEST_DELAY * attempt;
+                Logger.warn(`Rate limit hit, waiting ${delay / 1000}s... (attempt ${attempt}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+
+            if (!shouldRetry) throw error;
+
+            Logger.error(`Error on attempt ${attempt}: ${error.message}`);
+        }
+
+        if (attempt < maxAttempts) {
+            const delay = REQUEST_DELAY * Math.pow(2, attempt - 1);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+
+    throw new Error(`Operation failed after ${maxAttempts} attempts`);
+};
+
+// Update extractInfo to use the new retry mechanism
+const extractInfo = async (data, targetUser, basicUserInfo, chunk, model) => {
+    const cacheDir = path.join(tmpDir, 'cache', normalizeFileName(targetUser));
+    const promptFileName = `prompt_${chunk}.json`;
+    const promptResponseFileName = `prompt_response_${chunk}_${model}.json`;
+
+    // Check cache first
+    const cachedPrompt = readCacheFile(cacheDir, promptFileName);
+    const cachedPromptResponse = readCacheFile(cacheDir, promptResponseFileName);
+
+    if (cachedPrompt && cachedPromptResponse) {
+        return cachedPromptResponse;
+    }
+
+    Logger.info(`Processing chunk ${chunk} for ${targetUser}`);
+    const promptContent = prompt_whatsapp(targetUser, targetUser, basicUserInfo, data);
+    writeCacheFile(cacheDir, promptFileName, { prompt: promptContent });
+
+    try {
+        const result = await retryOperation(
+            async () => runChatCompletion([{
+                role: 'user',
+                content: promptContent
+            }], true, model),
+            validateJson
+        );
+
+        writeCacheFile(cacheDir, promptResponseFileName, result);
+        return result;
+    } catch (error) {
+        Logger.error(`Failed to process chunk ${chunk}: ${error.message}`);
+        throw error;
+    }
+};
+/**
+ * Runs chat completion using either OpenAI or Claude API.
+ *
+ * Steps:
+ * 1. Validates model type (openai or claude)
+ * 2. Makes API request to selected model
+ * 3. Processes response and returns parsed JSON
+ *
+ * OpenAI flow:
+ * - Creates OpenAI client with API key
+ * - Makes completion request with gpt-4
+ * - Returns parsed JSON response
+ *
+ * Claude flow:
+ * - Makes POST request to Anthropic API
+ * - Uses claude-3-sonnet model
+ * - Parses markdown or JSON response
+ *
+ * @param {Array} messages - Array of message objects to send to API
+ * @param {boolean} useGrammar - Whether to use grammar checking (unused)
+ * @param {string} model - Model type ('openai' or 'claude')
+ * @returns {Object} Parsed JSON response from API
+ * @throws {Error} If API request fails
+ */
+const runChatCompletion = async (messages, useGrammar = false, model) => {
+    if (model === 'openai') {
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: messages,
+            response_format: { type: 'json_object' }
+        });
+
+        return JSON.parse(response.choices[0].message.content);
+    } else if (model === 'claude') {
+        const modelName = 'claude-3-sonnet-20240229';
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': process.env.CLAUDE_API_KEY,
+                'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+                model: modelName,
+                max_tokens: 8192,
+                temperature: 0,
+                messages: [
+                    {
+                        role: "user",
+                        content: messages[0].content
+                    }
+                ],
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Anthropic API request failed with status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = data.content[0].text;
+        return parseJsonFromMarkdown(content) || JSON.parse(content);
+    }
+};
+
+/**
+ * Normalizes a filename by converting to lowercase and removing special characters.
+ *
+ * @param {string} name - The filename to normalize.
+ * @returns {string} The normalized filename with only lowercase letters, numbers, underscores and hyphens.
+ */
+const normalizeFileName = (name) => {
+    return name.toLowerCase()
+        .replace(/\s+/g, '_')  // Replace spaces with underscores.
+        .replace(/[^a-z0-9_-]/g, ''); // Remove any other special characters.
+};
+
+/**
+ * Creates output directory structure for storing processed chat data.
+ *
+ * Creates a directory structure under ./output/ with the following subdirectories:
+ * - root: Base directory named after normalized username and source
+ * - processed: For storing processed message data
+ * - analytics: For storing analysis results
+ *
+ * @param {string} targetUser - Username to create directories for.
+ * @param {string} inputPath - Path to input file/directory being processed.
+ * @returns {Object} Object containing paths to created directories:
+ *   - root: Base output directory
+ *   - processed: Directory for processed files
+ *   - analytics: Directory for analytics files
+ */
+const createOutputDirs = (targetUser, inputPath) => {
+    // Normalize the target user name for file/directory naming.
+    const normalizedUser = normalizeFileName(targetUser);
+
+    // Get base name for single file or directory.
+    const sourceName = fs.statSync(inputPath).isDirectory()
+        ? 'directory'
+        : path.basename(inputPath, path.extname(inputPath));
+
+    // Create a base directory name combining normalized user and source.
+    const baseDirName = `${normalizedUser}_${normalizeFileName(sourceName)}`;
+    const baseDir = path.join(process.cwd(), 'output', baseDirName);
+
+    const dirs = {
+        root: baseDir,
+        processed: path.join(baseDir, 'processed'),
+        analytics: path.join(baseDir, 'analytics'),
+        character: path.join(baseDir, 'character'),
+        raw: path.join(baseDir, 'raw')
+    };
+
+    // Create all directories.
+    Object.values(dirs).forEach(dir => {
+        fs.mkdirSync(dir, { recursive: true });
+    });
+
+    return dirs;
+};
+
+/**
+ * Extracts messages from a chat file for a specific user.
+ *
+ * This function processes a chat log file and extracts messages for a target user,
+ * filtering out media messages, deleted messages and edits. If previously processed
+ * messages exist for the user, prompts whether to reprocess.
+ *
+ * @param {string} filePath - Path to the chat log file to process.
+ * @param {string} targetUser - Username to extract messages for.
+ * @param {string} outputDir - Directory to save the extracted messages.
+ * @returns {Promise<Array<Object>>} Array of message objects containing:
+ *   - timestamp {string} Timestamp of the message
+ *   - message {string} Content of the message
+ * @throws {Error} If file cannot be read or processed
+ *
+ * TODO: since we are adding the timestamp to the output folder,
+ * we cant check if the chats are already generated before,
+ * we should name it as the username or
+ * find a way to validate if the chats are already generated before
+ */
+const extractMessagesFromFile = async (filePath, targetUser, dirs, skipSave = false) => {
+    // Only check for existing messages if we're not in directory processing mode
+    if (!skipSave) {
+        const normalizedUser = normalizeFileName(targetUser);
+        const userOutputPath = path.join(dirs.processed, `${normalizedUser}_messages.json`);
+        if (fs.existsSync(userOutputPath)) {
+            const { reprocess } = await inquirer.prompt([{
+                type: 'confirm',
+                name: 'reprocess',
+                message: `Found existing processed messages for ${targetUser}. Would you like to process again?`,
+                default: false
+            }]);
+
+            if (!reprocess) {
+                Logger.info('Using existing processed messages.');
+                return JSON.parse(fs.readFileSync(userOutputPath, 'utf-8'));
+            }
+        }
+    }
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+    const messages = [];
+    const messageRegex = /\[(.*?)\] (.*?):(.*)/;
+    const foundUsers = new Set();
+
+    lines.forEach(line => {
+        const match = line.match(messageRegex);
+        if (match) {
+            const [, timestamp, user, message] = match;
+            foundUsers.add(user.trim());
+
+            // Skip media messages, deleted messages and message edits
+            if (message.includes('‎image omitted') ||
+                message.includes('‎sticker omitted') ||
+                message.includes('‎audio omitted') ||
+                message.includes('‎video omitted') ||
+                message.includes('‎document omitted') ||
+                message.includes('This message was deleted') ||
+                message.includes('This message was edited')) {
+                return;
+            }
+
+            // Case insensitive comparison
+            if (user.trim().toLowerCase() === targetUser.trim().toLowerCase()) {
+                messages.push({
+                    timestamp,
+                    message: message.trim(),
+                    sourceFile: path.basename(filePath)
+                });
+            }
+        }
+    });
+
+    Logger.success(`Found ${messages.length} messages for ${targetUser} in ${path.basename(filePath)}`);
+
+    // Only save individual file results if not in directory processing mode
+    if (!skipSave) {
+        const normalizedUser = normalizeFileName(targetUser);
+        const userOutputPath = path.join(dirs.processed, `${normalizedUser}_messages.json`);
+        fs.writeFileSync(userOutputPath, JSON.stringify(messages, null, 2));
+        Logger.success(`Messages saved to: ${userOutputPath}`);
+
+        const usersListPath = path.join(dirs.analytics, 'found_users.json'); // TODO: do this for directories too
+        fs.writeFileSync(usersListPath, JSON.stringify(Array.from(foundUsers), null, 2));
+        Logger.success(`Users list saved to: ${usersListPath}`);
+    }
+
+    return messages;
+};
+
+/*
+ * Processes an array of messages to identify and track unique messages and duplicates.
+ * This function performs several key operations:
+ *
+ * 1. Message Deduplication:
+ *    - Uses a Set to track unique message content
+ *    - Filters out duplicate messages while preserving first occurrence
+ *    - Maintains original timestamp and message content
+ *
+ * 2. Duplicate Tracking:
+ *    - Records metadata for duplicate messages including:
+ *      - Timestamp of duplicate occurrence
+ *      - Source file where duplicate was found
+ *    - Maps duplicate messages to array of occurrences
+ *
+ * 3. Output Generation:
+ *    - Returns object containing:
+ *      - Array of unique messages with timestamps
+ *      - Map of duplicate messages with occurrence details.
+ *
+ * @param {Array} messages - Array of message objects containing timestamp, message content and sourceFile.
+ * @returns {Object} Object containing uniqueMessages array and duplicateInfo map.
+ * @property {Array} uniqueMessages - Array of deduplicated messages with timestamps.
+ * @property {Object} duplicateInfo - Map of duplicate messages to their occurrence details.
+ */
+const getUniqueMessages = (messages) => {
+    // Create a Set to track unique messages
+    const uniqueSet = new Set();
+    const uniqueMessages = [];
+    const duplicateInfo = new Map();
+
+    messages.forEach(msg => {
+        if (!uniqueSet.has(msg.message)) {
+            // Add to unique set and messages array
+            uniqueSet.add(msg.message);
+            uniqueMessages.push({
+                timestamp: msg.message.timestamp,
+                message: msg.message
+            });
+        } else {
+            // Track duplicate information
+            if (!duplicateInfo.has(msg.message)) {
+                duplicateInfo.set(msg.message, []);
+            }
+            duplicateInfo.get(msg.message).push({
+                timestamp: msg.timestamp,
+                sourceFile: msg.sourceFile
+            });
+        }
+    });
+
+    return {
+        uniqueMessages,
+        duplicateInfo: Object.fromEntries(duplicateInfo)
+    };
+};
+
+/*
+ * Processes a directory of text files to extract and analyze messages for a target user.
+ * This function performs several key operations:
+ *
+ * 1. Message Collection:
+ *    - Scans the directory for .txt files
+ *    - Extracts messages from each file for the target user
+ *    - Tracks source file information for each message
+ *
+ * 2. Message Processing:
+ *    - Combines messages from all files into a single collection
+ *    - Identifies and handles duplicate messages across files
+ *    - Generates unique message set removing duplicates
+ *
+ * 3. Output Generation:
+ *    - Saves combined raw messages with source tracking
+ *    - Creates filtered unique message set
+ *    - Generates duplicate message analysis
+ *    - Produces processing metadata and statistics
+ *
+ * @param {string} directory - Path to the directory containing text files to process.
+ * @param {string} targetUser - Username to extract messages for.
+ * @param {Object} dirs - Object containing output directory paths.
+ * @param {string} dirs.processed - Path to save processed message files.
+ * @param {string} dirs.analytics - Path to save analytics files.
+ * @returns {Array} Array of unique messages extracted from all files, each containing timestamp and message content.
+ * @throws {Error} If directory cannot be read or files cannot be processed.
+ */
+const processDirectory = async (directory, targetUser, dirs) => {
+    const files = fs.readdirSync(directory);
+    let allMessages = [];
+    const processedFiles = new Set();
+
+    // First pass: collect all messages from each file
+    for (const file of files) {
+        if (file.endsWith('.txt')) {
+            const filePath = path.join(directory, file);
+            Logger.info(`Processing file: ${filePath}`);
+
+            const messages = await extractMessagesFromFile(filePath, targetUser, dirs, true);
+            if (messages && messages.length > 0) {
+                // Add source file tracking to each message
+                allMessages = allMessages.concat(messages.map(msg => ({
+                    ...msg,
+                    sourceFile: path.basename(filePath)
+                })));
+                processedFiles.add(path.basename(filePath));
+            }
+        }
+    }
+
+    // Normalize user name for file names
+    const normalizedUser = normalizeFileName(targetUser);
+
+    // Save combined messages with source information for traceability
+    const combinedOutputPath = path.join(dirs.processed, `${normalizedUser}_combined_messages.json`);
+    fs.writeFileSync(combinedOutputPath, JSON.stringify(allMessages, null, 2));
+
+    // Generate and save unique messages, removing duplicates while preserving metadata
+    const { uniqueMessages, duplicateInfo } = getUniqueMessages(allMessages);
+
+    // Save deduplicated message set
+    const uniqueOutputPath = path.join(dirs.processed, `${normalizedUser}_unique_messages.json`);
+    fs.writeFileSync(uniqueOutputPath, JSON.stringify(uniqueMessages, null, 2));
+
+    // Save duplicate analysis for message tracking and verification
+    const duplicatesPath = path.join(dirs.analytics, 'duplicate_messages_info.json');
+    fs.writeFileSync(duplicatesPath, JSON.stringify(duplicateInfo, null, 2));
+
+    // Generate and save comprehensive processing statistics
+    const processingMeta = {
+        totalFiles: processedFiles.size,
+        processedFiles: Array.from(processedFiles),
+        totalMessages: allMessages.length,
+        uniqueMessages: uniqueMessages.length,
+        duplicateMessages: allMessages.length - uniqueMessages.length,
+        timestamp: new Date().toISOString()
+    };
+
+    fs.writeFileSync(
+        path.join(dirs.analytics, 'processing_metadata.json'),
+        JSON.stringify(processingMeta, null, 2)
+    );
+
+    // Return deduplicated message set for further analysis
+    return uniqueMessages;
+};
+
+/*
+ * Loads user information from a JSON file at the specified path.
+ *
+ * @param {string} infoPath - Path to the JSON file containing user information.
+ * @returns {string|null} The contents of the file as a UTF-8 string if successful, null if error occurs.
+ * @throws {Error} If file cannot be read or is invalid.
+ */
+const loadUserInfo = (infoPath) => {
+    try {
+        return fs.readFileSync(infoPath, 'utf-8');
+    } catch (error) {
+        Logger.error(`Error loading user info from ${infoPath}:`, error);
+        return null;
+    }
+};
+
+// Add API key handling functions
+const saveApiKey = (model, apiKey) => {
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    envConfig[`${model.toUpperCase()}_API_KEY`] = apiKey;
+    fs.writeFileSync(envPath, Object.entries(envConfig).map(([key, value]) => `${key}=${value}`).join('\n'));
+};
+
+const loadApiKey = (model) => {
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    return envConfig[`${model.toUpperCase()}_API_KEY`];
+};
+
+const validateApiKey = (apiKey, model) => {
+    if (!apiKey) return false;
+
+    if (model === 'openai') {
+        return apiKey.trim().startsWith('sk-');
+    } else if (model === 'claude') {
+        return apiKey.trim().length > 0;
+    }
+    return false;
+};
+
+const promptForApiKey = async (model) => {
+    return await promptUser(`Enter ${model.toUpperCase()} API key: `);
+};
+
+/**
+ * Finds all unique users from chat message files.
+ *
+ * Process:
+ * 1. Creates a Set to store unique usernames
+ * 2. Defines regex pattern to match message format "[timestamp] username: message"
+ * 3. For each file:
+ *    - Reads file content
+ *    - Splits into lines
+ *    - Extracts usernames using regex
+ *    - Adds to Set
+ * 4. Handles both single files and directories of files
+ * 5. Returns array of unique usernames
+ *
+ * @param {string} inputPath - Path to chat log file or directory
+ * @returns {string[]} Array of unique usernames found
+ */
+const findUsers = (inputPath) => {
+    const users = new Set();
+    const messageRegex = /\[(.*?)\] (.*?):(.*)/;
+
+    const processFile = (filePath) => {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const lines = content.split('\n');
+
+        lines.forEach(line => {
+            const match = line.match(messageRegex);
+            if (match) {
+                const [, , user] = match;
+                users.add(user.trim());
+            }
+        });
+    };
+
+    if (fs.statSync(inputPath).isDirectory()) {
+        const files = fs.readdirSync(inputPath);
+        files.forEach(file => {
+            if (file.endsWith('.txt')) {
+                processFile(path.join(inputPath, file));
+            }
+        });
+    } else {
+        processFile(inputPath);
+    }
+
+    return Array.from(users);
+};
+/**
+ * Combines and deduplicates character information from an array of results.
+ *
+ * Steps:
+ * 1. Check if the results array is empty.
+ *    - If it is, return a default object with empty fields for bio, lore, adjectives, topics, style, messageExamples, and postExamples.
+ * 2. Create a combined object that aggregates data from all results:
+ *    - bio: Concatenates all bio entries from each result.
+ *    - lore: Collects unique lore entries using a Set to avoid duplicates.
+ *    - adjectives: Collects unique adjectives using a Set.
+ *    - topics: Collects unique topics using a Set.
+ *    - style:
+ *      - all: Collects unique styles from the 'all' category using a Set.
+ *      - chat: Collects unique styles from the 'chat' category using a Set.
+ *      - post: Collects unique styles from the 'post' category using a Set.
+ *    - messageExamples: Collects unique message examples using a Set.
+ *    - postExamples: Collects unique post examples using a Set.
+ *
+ * @param {Array} results - Array of character information objects to combine and deduplicate.
+ * @returns {Object} Combined character information with deduplicated fields.
+ *
+ */
+const combineAndDeduplicate = (results) => {
+    if (results.length === 0) {
+        return {
+            // Provide a fallback single-item bio if no results
+            bio: ["No data available."],
+            lore: [],
+            // The additional fields you requested
+            plugins: [],
+            clients: [],
+            modelProvider: "",
+            settings: {
+                secrets: {},
+                voice: {
+                    model: ""
+                }
+            },
+            system: "",
+            adjectives: [],
+            topics: [],
+            style: {
+                all: [],
+                chat: [],
+                post: []
+            },
+            messageExamples: [],
+            postExamples: [],
+
+
+        };
+    }
+    // ----- 1) Keep ONLY ONE bio -----
+    // We retrieve the first non-empty bio array from 'results'
+    // and take its first element as the single bio entry.
+    const firstBio = results.find(r => Array.isArray(r.bio) && r.bio.length > 0)?.bio[0] ?? "";
+
+    return {
+        bio: [firstBio],   // Single-item array for the biography
+        // ----- 2) Deduplicate the other fields as before -----
+        lore: [...new Set(results.flatMap(r => r.lore || []))],
+        adjectives: [...new Set(results.flatMap(r => r.adjectives || []))],
+        topics: [...new Set(results.flatMap(r => r.topics || []))],
+        style: {
+            all: [...new Set(results.flatMap(r => (r.style?.all) || []))],
+            chat: [...new Set(results.flatMap(r => (r.style?.chat) || []))],
+            post: [...new Set(results.flatMap(r => (r.style?.post) || []))]
+        },
+        messageExamples: [...new Set(results.flatMap(r => r.messageExamples || []))],
+        postExamples: [...new Set(results.flatMap(r => r.postExamples || []))],
+
+        // ----- 3) Add your extra attributes here -----
+        plugins: [],
+        clients: [],
+        modelProvider: "",
+        settings: {
+            secrets: {},
+            voice: {
+                model: ""
+            }
+        },
+        system: ""
+    };
+};
+
+/**
+ * Saves processed character data to filesystem.
+ *
+ * @param {Object} characterData - Processed character information
+ * @param {Object} dirs - Directory paths for saving data
+ * @returns {Object} Directory paths used
+ */
+const saveCharacterData = (characterData, dirs) => {
+    Logger.info('Saving character data...');
+
+    // Normalize filename and create path
+    const normalizedName = normalizeFileName(characterData.name);
+    const filePath = path.join(dirs.character, `${normalizedName}.character.json`);
+
+    // Write character data
+    fs.writeFileSync(filePath, JSON.stringify(characterData, null, 2));
+    Logger.success(`Character data saved to: ${filePath}`);
+    return dirs;
+};
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/************************************************************************************************
+ * Cache & Session Management
+ * This section handles caching functionality for the application, including session management,
+ * reading/writing cache files, and clearing cached data.
+ ************************************************************************************************/
+
+/*
+ * Handles resuming an unfinished session or starting a new one.
+ * - Checks for existing unfinished session in cache
+ * - Prompts user whether to continue unfinished session
+ * - Clears cache if user chooses to start fresh
+ *
+ * @param {Object} projectCache - Existing cache object if any
+ * @param {string} inputPath - Path to input chat files
+ * @param {Object} options - CLI options object
+ * @param {string} model - Selected AI model (openai/claude)
+ * @returns {Object} Updated project cache with session info
+ */
+const resumeOrStartNewSession = async (projectCache, inputPath, options, model) => {
+    // First check if there's a cached session and handle it
+    if (projectCache?.unfinishedSession) {
+        const cacheDir = path.join(tmpDir, 'cache', path.basename(inputPath));
+        Logger.info(`\nFound cached session in: ${cacheDir}`);
+        Logger.info('Session progress:', {
+            currentChunk: projectCache.unfinishedSession.currentChunk,
+            totalChunks: projectCache.unfinishedSession.totalChunks,
+            completed: projectCache.unfinishedSession.completed
+        });
+
+        // Prompt specifically about continuing with cached session
+        const choice = await promptUser('Want to continue with the cached session? (Y/n): ', 'Y');
+        if (choice.toLowerCase() === 'y') {
+            Logger.success('Continuing with cached session...');
+            return projectCache; // Return existing cache without modification
+        }
+
+        // If not continuing with cached session, check for existing results
+        Logger.warn('Starting fresh session...');
+        projectCache.unfinishedSession = null;
+        clearGenerationCache(inputPath);
+        Logger.success('Cleared cached session.');
+    }
+
+    // Rest of the existing function for starting a new session
+    let userInfo = '';
+    if (options.info) {
+        const loadedInfo = loadUserInfo(options.info);
+        if (loadedInfo) {
+            userInfo = typeof loadedInfo === 'string' ? loadedInfo : JSON.stringify(loadedInfo, null, 2);
+        }
+    }
+
+    // Prompt for user info file if not provided
+    if (!userInfo) {
+        const infoPath = await promptUser('Enter path to user info file (optional, press enter to skip):');
+        if (infoPath && fs.existsSync(infoPath)) {
+            const loadedInfo = loadUserInfo(infoPath);
+            if (loadedInfo) {
+                userInfo = typeof loadedInfo === 'string' ? loadedInfo : JSON.stringify(loadedInfo, null, 2);
+            }
+        }
+    }
+
+    // Fall back to manual user info input
+    if (!userInfo) {
+        userInfo = await promptUser('Enter additional user info that might help the summarizer:');
+    }
+
+    // Initialize new project cache
+    projectCache = {
+        model: model,
+        basicUserInfo: userInfo,
+        unfinishedSession: {
+            currentChunk: 0,
+            totalChunks: 0,
+            completed: false
+        }
+    };
+
+    Logger.info('New session initialized:');
+
+    // // Set up API key for chosen model
+    // const apiKey = await getApiKey(projectCache.model);
+    // if (!apiKey) {
+    //     throw new Error(`Failed to get a valid API key for ${projectCache.model}`);
+    // }
+    // process.env[`${projectCache.model.toUpperCase()}_API_KEY`] = apiKey;
+
+    return projectCache;
+};
+
+/*
+ * Reads and parses a JSON cache file from the cache directory.
+ * - Takes cache directory path and filename
+ * - Returns parsed JSON content or null if file doesn't exist
+ */
+const readCacheFile = (cacheDir, fileName) => {
+    const filePath = path.join(cacheDir, fileName);
+    if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+    return null;
+};
+
+/*
+ * Clears prompt response cache files for a given input path.
+ * - Removes all files starting with 'prompt_response_' in cache directory
+ * - Used when restarting an unfinished session
+ */
+const clearGenerationCache = (inputPath) => {
+    const cacheDir = path.join(tmpDir, 'cache', path.basename(inputPath));
+    if (fs.existsSync(cacheDir)) {
+        const files = fs.readdirSync(cacheDir);
+        files.forEach((file) => {
+            if (file.startsWith('prompt_response_')) {
+                fs.unlinkSync(path.join(cacheDir, file));
+            }
+        });
+    }
+};
+
+/*
+ * Writes content to a cache file in JSON format.
+ * - Creates cache directory if it doesn't exist
+ * - Writes formatted JSON content to specified file
+ */
+const writeCacheFile = (cacheDir, fileName, content) => {
+    // Create cache directory if it doesn't exist
+    if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+    }
+    const filePath = path.join(cacheDir, fileName);
+    fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+};
+
+/*
+ * CLI Management and User Prompting
+ *
+ * Handles command-line interface interactions and user prompts
+ */
+
+/*
+ * Prompts user for input with optional default value.
+ * - Uses inquirer to show interactive prompt
+ * - Returns user's answer as string
+ */
+const promptUser = async (question, defaultValue = '') => {
+    console.log();
+    const { answer } = await inquirer.prompt([{
+        type: 'input',
+        name: 'answer',
+        message: question,
+        default: defaultValue,
+    }]);
+    return answer;
+};
+
+/**
+ * Chunks WhatsApp messages into smaller segments for AI processing.
+ *
+ * Process:
+ * 1. Initialize empty arrays and counters for chunking messages
+ * 2. Set max token limit (4000) for Claude-3 compatibility
+ * 3. Create metadata object with user info and message stats
+ * 4. For each message:
+ *    - Estimate token count (4 chars ≈ 1 token)
+ *    - If adding message exceeds token limit:
+ *      - Save current chunk with metadata
+ *      - Start new chunk with current message
+ *    - Otherwise add message to current chunk
+ * 5. Save final chunk if any messages remain
+ * 6. Log chunking results and return chunks array
+ *
+ * @param {Array} messages - Array of WhatsApp message objects to chunk
+ * @param {string} targetUser - Username/identifier of the chat participant
+ * @param {string} model - Selected AI model ('openai' or 'claude')
+ * @param {Object} dirs - Object containing output directory paths
+ * @returns {Promise<Array>} Array of chunks, each containing:
+ *   - metadata: Object with user info and message stats
+ *   - messages: Array of message objects for this chunk
+ *   - messageCount: Number of messages in this chunk
+ *
+ * Each chunk is sized to fit within model token limits:
+ * - Claude: 4000 tokens
+ * - OpenAI: 4096 tokens
+ *
+ * Token estimation uses rough 4 characters = 1 token approximation.
+ * Metadata is added to each chunk to provide context for AI processing.
+ */
+const chunkMessages = async (messages, targetUser, model, dirs) => {
+    Logger.info(`Starting message chunking for ${targetUser}...`);
+    const chunks = [];
+    let currentChunk = [];
+    let currentTokens = 0;
+
+    // Set token limit based on the model
+    const MAX_TOKENS = model === 'claude' ? 4000 : 4096; // Adjust as needed for OpenAI models
+
+    // Add metadata to help AI understand context
+    const chunkMetadata = {
+        user: targetUser,
+        totalMessages: messages.length,
+        messageType: 'whatsapp_chat'
+    };
+
+    for (const msg of messages) {
+        // Estimate tokens (rough approximation: 4 chars = 1 token)
+        const msgTokens = Math.ceil(msg.message.length / 4);
+
+        if (currentTokens + msgTokens > MAX_TOKENS) {
+            // Add metadata to chunk before pushing
+            chunks.push({
+                metadata: chunkMetadata,
+                messages: currentChunk,
+                messageCount: currentChunk.length
+            });
+            currentChunk = [msg.message];
+            currentTokens = msgTokens;
+        } else {
+            currentChunk.push(msg.message);
+            currentTokens += msgTokens;
+        }
+    }
+
+    // Push final chunk if not empty
+    if (currentChunk.length > 0) {
+        chunks.push({
+            metadata: chunkMetadata,
+            messages: currentChunk,
+            messageCount: currentChunk.length
+        });
+    }
+
+    // Write chunks to debug file in the output directory
+    const debugPath = path.join(dirs.root, 'chunks-debug.json');
+    fs.writeFileSync(debugPath, JSON.stringify(chunks, null, 2));
+    Logger.info(`Created ${chunks.length} chunks from ${messages.length} messages`);
+    return chunks;
+};
+
+/**
+ * Loads project cache from the filesystem.
+ * Contains project configuration and basic info like model selection and API keys.
+ *
+ * @param {string} inputPath - Path to input file/directory being processed
+ * @returns {Object|null} Project cache object or null if no cache exists
+ */
+const loadProjectCache = (inputPath) => {
+    Logger.info(`Loading project cache for input path: ${inputPath}`);
+
+    const cacheDir = path.join(tmpDir, 'cache', path.basename(inputPath));
+    const cacheFile = path.join(cacheDir, 'project.json');
+
+    try {
+        if (fs.existsSync(cacheFile)) {
+            const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+
+            // Load environment variables from .env if it exists
+            const envPath = path.join(cacheDir, '.env');
+            if (fs.existsSync(envPath)) {
+                const envConfig = dotenv.parse(fs.readFileSync(envPath));
+                if (envConfig.MODEL_TYPE) {
+                    cache.model = envConfig.MODEL_TYPE;
+                }
+            }
+            return cache;
+        }
+    } catch (error) {
+        Logger.error(`Error loading project cache: ${error.message}`);
+    }
+
+    return null;
+};
+
+/**
+ * Saves project cache to filesystem.
+ * Stores project configuration, session state, and basic info.
+ *
+ * @param {string} inputPath - Path to input file/directory being processed
+ * @param {Object} cache - Project cache object to save
+ */
+const saveProjectCache = (inputPath, cache) => {
+    Logger.debug('Saving project cache...');
+
+    const cacheDir = path.join(tmpDir, 'cache', path.basename(inputPath));
+    const cacheFile = path.join(cacheDir, 'project.json');
+
+    try {
+        // Create cache directory if it doesn't exist
+        if (!fs.existsSync(cacheDir)) {
+            fs.mkdirSync(cacheDir, { recursive: true });
+        }
+
+        // Save cache object
+        fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
+
+        // Save environment variables if they exist
+        if (cache.model) {
+            const envPath = path.join(cacheDir, '.env');
+            fs.writeFileSync(envPath, `MODEL_TYPE=${cache.model}\n`);
+        }
+    } catch (error) {
+        Logger.error(`Error saving project cache: ${error.message}`);
+    }
+};
+
+// Function to load cached results from the temp directory
+const loadCachedResults = (cacheDir) => {
+    const results = [];
+    let i = 0;
+    let filePath;
+
+    while (true) {
+        filePath = path.join(cacheDir, `prompt_response_${i}_openai.json`);
+        if (fs.existsSync(filePath)) {
+            const cachedResult = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            results.push(cachedResult);
+            i++;
+        } else {
+            break; // No more files to load
+        }
+    }
+    return results;
+};
+
+const printSummary = (dirs) => {
+    console.log('\n📂 Summary of Processed Files:');
+    console.log(`├── ${dirs.root}`);
+    console.log(`│   ├── character`);
+    console.log(`│   │   └── ${path.basename(dirs.character)}.character.json`);
+    console.log(`│   ├── raw`);
+    console.log(`│   │   └── messages.json`);
+    console.log(`│   ├── analytics`);
+    console.log(`│   │   ├── duplicate_messages_info.json`);
+    console.log(`│   │   └── processing_metadata.json`);
+    console.log(`│   ├── processed`);
+    console.log(`│   │   └── ${path.basename(dirs.processed)}_unique_messages.json`);
+    console.log(`│   │   └── ${path.basename(dirs.processed)}_combined_messages.json`);
+    console.log(`│   └── chunks-debug.json`);
+    console.log('└── Process completed successfully.');
+};
+
+main();
+
+================
+File: scripts/folder2knowledge.js
+================
+#!/usr/bin/env node
+
+import pdf2md from '@opendocsg/pdf2md';
+import dotenv from 'dotenv';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
+import readline from 'readline';
+
+dotenv.config();
+
+// The first argument from the command line is the starting path
+const startingPath = process.argv[2];
+
+const tmpDir = path.join(os.homedir(), 'tmp', '.eliza');
+const envPath = path.join(tmpDir, '.env');
+
+// Ensure the tmp directory and .env file exist
+const ensureTmpDirAndEnv = async () => {
+  await fs.mkdir(tmpDir, { recursive: true });
+  if (!await fs.access(envPath).then(() => true).catch(() => false)) {
+    await fs.writeFile(envPath, '');
+  }
+};
+
+const saveApiKey = async (apiKey) => {
+  const envConfig = dotenv.parse(await fs.readFile(envPath, 'utf-8'));
+  envConfig.OPENAI_API_KEY = apiKey;
+  await fs.writeFile(envPath, Object.entries(envConfig).map(([key, value]) => `${key}=${value}`).join('\n'));
+};
+
+const loadApiKey = async () => {
+  const envConfig = dotenv.parse(await fs.readFile(envPath, 'utf-8'));
+  return envConfig.OPENAI_API_KEY;
+};
+
+const validateApiKey = (apiKey) => {
+  return apiKey && apiKey.trim().startsWith('sk-');
+};
+
+const promptForApiKey = () => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    rl.question('Enter your OpenAI API key: ', (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+};
+
+const getApiKey = async () => {
+  // Check process.env first
+  if (validateApiKey(process.env.OPENAI_API_KEY)) {
+    return process.env.OPENAI_API_KEY;
+  }
+
+  // Check cache in tmpdir
+  const cachedKey = await loadApiKey();
+  if (validateApiKey(cachedKey)) {
+    return cachedKey;
+  }
+
+  // Prompt user if no valid key found
+  const newKey = await promptForApiKey();
+  if (validateApiKey(newKey)) {
+    await saveApiKey(newKey);
+    return newKey;
+  } else {
+    console.error('Invalid API key provided. Exiting.');
+    process.exit(1);
+  }
+};
+
+const processDocument = async (filePath) => {
+  console.log(`Processing file: ${filePath}`);
+
+  let content;
+  const fileExtension = path.extname(filePath).toLowerCase();
+
+  if (fileExtension === '.pdf') {
+    const buffer = await fs.readFile(filePath);
+    const uint8Array = new Uint8Array(buffer);
+    content = await pdf2md(uint8Array);
+  } else {
+    content = await fs.readFile(filePath, 'utf8');
+  }
+
+  // Split content into chunks
+  const chunkSize = 1000; // Example chunk size
+  const chunks = [];
+  for (let i = 0; i < content.length; i += chunkSize) {
+    chunks.push(content.substring(i, i + chunkSize));
+  }
+
+  return {
+    document: content,
+    chunks: chunks
+  };
+};
+
+// Asynchronous function to recursively find files and process them
+const findAndProcessFiles = async (dirPath) => {
+  try {
+    const filesAndDirectories = await fs.readdir(dirPath, {
+      withFileTypes: true,
+    });
+
+    const documents = [];
+    const chunks = [];
+
+    for (const dirent of filesAndDirectories) {
+      const fullPath = path.join(dirPath, dirent.name);
+
+      if (dirent.isDirectory()) {
+        const { docs, chks } = await findAndProcessFiles(fullPath);
+        documents.push(...docs);
+        chunks.push(...chks);
+      } else if (dirent.isFile()) {
+        const { document, chunks: fileChunks } = await processDocument(fullPath);
+        documents.push(document);
+        chunks.push(...fileChunks);
+      }
+    }
+
+    return { docs: documents, chks: chunks };
+  } catch (error) {
+    console.error(`Error processing directory ${dirPath}: ${error}`);
+    return { docs: [], chks: [] };
+  }
+};
+
+const promptForPath = () => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    rl.question('Please enter a starting path: ', (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+};
+
+// Main function to kick off the script
+const main = async () => {
+  try {
+    await ensureTmpDirAndEnv();
+    const apiKey = await getApiKey();
+    process.env.OPENAI_API_KEY = apiKey;
+
+    let path = startingPath;
+
+    if (!path) {
+      path = await promptForPath();
+    }
+
+    if (!path) {
+      console.log('No starting path provided. Exiting.');
+      return;
+    }
+
+    console.log(`Searching for files in: ${path}`);
+    const { docs, chks } = await findAndProcessFiles(path);
+
+    const output = {
+      documents: docs,
+      chunks: chks
+    };
+
+    // Save the output to knowledge.json
+    await fs.writeFile('knowledge.json', JSON.stringify(output, null, 2));
+
+    console.log('Done processing files and saved memories to knowledge.json.');
+  } catch (error) {
+    console.error('Error during script execution:', error);
+    process.exit(1);
+  }
+};
+
+// Execute the main function
+main();
+
+================
+File: scripts/knowledge2character.js
+================
+#!/usr/bin/env node
+
+import fs from 'fs';
+import inquirer from 'inquirer';
+
+const promptUser = async (question, defaultValue = '') => {
+  console.log();
+
+  const { answer } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'answer',
+      message: question,
+      default: defaultValue,
+    },
+  ]);
+  return answer;
+};
+
+const readJsonFile = (filePath) => {
+  try {
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error(`Error reading JSON file ${filePath}:`, error);
+    return null;
+  }
+};
+
+const writeJsonFile = (filePath, data) => {
+  try {
+    const jsonContent = JSON.stringify(data, null, 2);
+    fs.writeFileSync(filePath, jsonContent, 'utf8');
+    console.log(`Successfully wrote JSON file: ${filePath}`);
+  } catch (error) {
+    console.error(`Error writing JSON file ${filePath}:`, error);
+  }
+};
+
+const main = async () => {
+  try {
+    let characterFilePath = process.argv[2];
+    let knowledgeFilePath = process.argv[3];
+    let outputFilePath = process.argv[4];
+
+    if (!characterFilePath) {
+      characterFilePath = await promptUser('Please provide the path to the character JSON file:', 'character.json');
+    }
+
+    if (!knowledgeFilePath) {
+      knowledgeFilePath = await promptUser('Please provide the path to the knowledge JSON file:', 'knowledge.json');
+    }
+
+    const character = readJsonFile(characterFilePath);
+    const knowledge = readJsonFile(knowledgeFilePath);
+
+    if (!character || !knowledge) {
+      console.error('Invalid input files. Please provide valid JSON files for character and knowledge.');
+      return;
+    }
+
+    if (!outputFilePath) {
+      const characterName = character.name.replace(/\s/g, '_');
+      outputFilePath = `${characterName}.knowledge.character.json`;
+    }
+
+    character.knowledge = knowledge;
+
+    writeJsonFile(outputFilePath, character);
+
+    console.log('Script execution completed successfully.');
+  } catch (error) {
+    console.error('Error during script execution:', error);
+  }
+};
+
+main();
+
+================
+File: scripts/tweets2character.js
+================
+#!/usr/bin/env node
+
+import cliProgress from 'cli-progress';
+import { program } from 'commander';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import inquirer from "inquirer";
+import StreamZip from 'node-stream-zip';
+import os from 'os';
+import path from 'path';
+import util from 'util';
+import { prompt } from './prompts/prompt.js';
+
+dotenv.config();
+
+const MAX_RETRIES = parseInt(process.env.MAX_RETRIES) || 5;
+const RETRY_DELAY = parseInt(process.env.RETRY_DELAY) || 3000;
+
+const tmpDir = path.join(os.homedir(), 'tmp', '.eliza');
+const envPath = path.join(tmpDir, '.env');
+
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true });
+}
+if (!fs.existsSync(envPath)) {
+  fs.writeFileSync(envPath, '');
+}
+
+let basicUserInfo = "";
+
+const logError = (message, error) => {
+  console.error(`[${new Date().toISOString()}] ERROR: ${message}`);
+  if (error) {
+    console.error(util.inspect(error, { depth: null, colors: true }));
+  }
+};
+
+const parseJsonFromMarkdown = (text) => {
+  const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[1]);
+    } catch (error) {
+      logError('Error parsing JSON from markdown:', error);
+    }
+  }
+  return null;
+};
+
+const promptUser = async (question, defaultValue = '') => {
+  // Add a newline before the prompt
+  console.log();
+
+  const { answer } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'answer',
+      message: question,
+      default: defaultValue,
+    },
+  ]);
+  return answer;
+};
+
+const runChatCompletion = async (messages, useGrammar = false, model) => {
+  if (model === 'openai') {
+    const modelName = 'gpt-4o';
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: messages,
+      }),
+    });
+
+    // check for 429
+    if (response.status === 429) {
+      await new Promise(resolve => setTimeout(resolve, 30000));
+      return runChatCompletion(messages, useGrammar, model);
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content.trim();
+    const parsed = parseJsonFromMarkdown(content) || JSON.parse(content);
+    return parsed;
+  }
+  else if (model === 'claude') {
+    const modelName = 'claude-3-5-sonnet-20240620';
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': process.env.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: modelName,
+        max_tokens: 8192,
+        temperature: 0,
+        messages: [
+          {
+            role: "user",
+            content: messages[0].content
+          }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      logError(`HTTP error! status: ${response.status}`, errorData);
+      throw new Error(`Anthropic API request failed with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0].text;
+    const parsed = parseJsonFromMarkdown(content) || JSON.parse(content);
+    return parsed;
+  }
+};
+
+
+const retryWithExponentialBackoff = async (func, retries = MAX_RETRIES) => {
+  try {
+    return await func();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (MAX_RETRIES - retries + 1)));
+      return retryWithExponentialBackoff(func, retries - 1);
+    }
+    throw error;
+  }
+};
+
+const validateJson = (json) => {
+  const requiredKeys = ['bio', 'lore', 'adjectives', 'topics', 'style', 'messageExamples', 'postExamples'];
+  const styleKeys = ['all', 'chat', 'post'];
+
+  return requiredKeys.every(key => key in json) &&
+    'style' in json &&
+    styleKeys.every(key => key in json.style);
+};
+
+const ensureLogDirectory = () => {
+  const logDir = path.join(tmpDir, 'logs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+};
+
+const writeCacheFile = (cacheDir, fileName, content) => {
+  const filePath = path.join(cacheDir, fileName);
+  fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+};
+
+const readCacheFile = (cacheDir, fileName) => {
+  const filePath = path.join(cacheDir, fileName);
+  if (fs.existsSync(filePath)) {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  }
+  return null;
+};
+
+const saveProjectCache = (archivePath, cache) => {
+  const cacheDir = path.join(tmpDir, 'cache', path.basename(archivePath, '.zip'));
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+  }
+  writeCacheFile(cacheDir, 'project_cache.json', cache);
+
+  // Save the model type to the project's .env file
+  const envPath = path.join(cacheDir, '.env');
+  const envConfig = {
+    MODEL_TYPE: cache.model,
+  };
+  fs.writeFileSync(envPath, Object.entries(envConfig).map(([key, value]) => `${key}=${value}`).join('\n'));
+};
+
+const loadProjectCache = (archivePath) => {
+  const cacheDir = path.join(tmpDir, 'cache', path.basename(archivePath, '.zip'));
+  const cache = readCacheFile(cacheDir, 'project_cache.json');
+
+  // Load the model type from the project's .env file
+  const envPath = path.join(cacheDir, '.env');
+  if (fs.existsSync(envPath)) {
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    if (envConfig.MODEL_TYPE) {
+      cache.model = envConfig.MODEL_TYPE;
+    }
+  }
+
+  return cache;
+};
+
+const clearGenerationCache = (archivePath) => {
+  const cacheDir = path.join(tmpDir, 'cache', path.basename(archivePath, '.zip'));
+  const files = fs.readdirSync(cacheDir);
+  files.forEach((file) => {
+    if (file.startsWith('prompt_response_')) {
+      fs.unlinkSync(path.join(cacheDir, file));
+    }
+  });
+};
+
+const extractInfo = async (accountData, chunk, chunkIndex, archivePath, model) => {
+  const cacheDir = path.join(tmpDir, 'cache', path.basename(archivePath, '.zip'));
+
+  const promptFileName = `prompt_${chunkIndex}.json`;
+  const promptResponseFileName = `prompt_response_${chunkIndex}_${model}.json`;
+
+  const cachedPrompt = readCacheFile(cacheDir, promptFileName);
+  const cachedPromptResponse = readCacheFile(cacheDir, promptResponseFileName);
+
+  const name = accountData[0].account.accountDisplayName;
+  const username = accountData[0].account.username;
+
+  if (cachedPrompt && cachedPromptResponse) {
+    return cachedPromptResponse;
+  }
+
+  writeCacheFile(cacheDir, promptFileName, { prompt: prompt(name, username, basicUserInfo, chunk) });
+  let result;
+  let attempts = 0;
+  const maxAttempts = 3;
+  do {
+    attempts++;
+    try {
+      result = await retryWithExponentialBackoff(() => runChatCompletion([{ role: 'user', content: prompt(name, username, basicUserInfo, chunk) }], true, model));
+      validateJson(result)
+    } catch (error) {
+      console.error(`Error processing chunk ${chunkIndex}, attempt ${attempts}:`, error);
+      if (attempts >= maxAttempts) throw error;
+    }
+  } while (!validateJson(result) && attempts < maxAttempts)
+
+  if (!validateJson(result)) {
+    console.error(`Failed to get valid result for chunk ${chunkIndex} after ${maxAttempts} attempts`);
+    return null;
+  }
+
+  writeCacheFile(cacheDir, promptResponseFileName, result);
+
+  return result;
+};
+
+const buildConversationThread = async (tweet, tweets, accountData) => {
+  let thread = [];
+  const visited = new Set();
+
+  async function processThread(currentTweet) {
+    if (!currentTweet) {
+      return;
+    }
+    if (visited.has(currentTweet.id_str)) {
+      return;
+    }
+    visited.add(currentTweet.id_str);
+    thread.unshift(currentTweet);
+    if (currentTweet.in_reply_to_status_id_str) {
+      const replyToTweet = tweets.find(
+        (t) => t.id_str === currentTweet.in_reply_to_status_id_str
+      );
+      await processThread(replyToTweet);
+    }
+  }
+
+  await processThread(tweet);
+  thread = [...new Set(thread)];
+  thread.sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  const conversationText = thread
+    .map((t) => {
+      const post = [];
+      post.push(`From: ${accountData[0].account.accountDisplayName} (@${accountData[0].account.username})`);
+      post.push(`Tweet ID: ${t.id_str}`);
+      if (t.in_reply_to_status_id_str) {
+        post.push(`In Reply To: ${t.in_reply_to_status_id_str}`);
+      }
+      post.push(`Timestamp: ${new Date(t.created_at).toLocaleString()}`);
+      post.push(`Content:`);
+      post.push(t.full_text);
+      post.push("---");
+      return post.join("\n");
+    })
+    .join("\n\n");
+
+  return conversationText;
+};
+
+const chunkText = async (tweets, accountData, archivePath) => {
+  const chunks = [];
+
+  const CHUNK_SIZE = 60000; // 50k tokens approx
+
+  const cacheDir = path.join(tmpDir, 'cache', path.basename(archivePath, '.zip'));
+
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+  }
+
+  if (Array.isArray(tweets)) {
+    for (let i = 0; i < tweets.length; i += 1000) {
+      const tweetChunk = tweets.slice(i, i + 1000);
+      const conversationThreads = await Promise.all(
+        tweetChunk.map((tweet) => buildConversationThread(tweet, tweets, accountData))
+      );
+
+      let currentChunk = "";
+
+      for (const thread of conversationThreads) {
+        if (thread.length > CHUNK_SIZE) {
+          chunks.push(thread);
+          continue;
+        }
+        // if length of current push is > threshold, push it and clear it
+        if (currentChunk.length + thread.length > CHUNK_SIZE) {
+          chunks.push(currentChunk);
+          currentChunk = "";
+        }
+        currentChunk += thread;
+      }
+      // if current chunk is not empty, push it
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk);
+      }
+    }
+  } else {
+    console.error('Error: tweets is not an array');
+  }
+
+  // Save the unchunked data to cache
+  fs.writeFileSync(path.join(cacheDir, 'unchunked_data.json'), JSON.stringify({ tweets, accountData }));
+
+  // Save the chunks to cache
+  chunks.forEach((chunk, index) => {
+    const json = JSON.stringify(chunk);
+    fs.writeFileSync(path.join(cacheDir, `chunk_${index}.json`), json);
+  });
+
+  return chunks;
+};
+
+const combineAndDeduplicate = (results) => {
+  if (results.length === 0) {
+    return {
+      bio: '',
+      lore: [],
+      adjectives: [],
+      topics: [],
+      style: {
+        all: [],
+        chat: [],
+        post: [],
+      },
+      messageExamples: [],
+      postExamples: [],
+    };
+  }
+
+  const combined = {
+    bio: results.flatMap(result => result.bio),
+    lore: [...new Set(results.flatMap((result) => result?.lore || []))],
+    adjectives: [...new Set(results.flatMap((result) => result?.adjectives || []))],
+    topics: [...new Set(results.flatMap((result) => result?.topics || []))],
+    style: {
+      all: [...new Set(results.flatMap((result) => result?.style?.all || []))],
+      chat: [...new Set(results.flatMap((result) => result?.style?.chat || []))],
+      post: [...new Set(results.flatMap((result) => result?.style?.post || []))],
+    },
+    messageExamples: [...new Set(results.flatMap((result) => result?.messageExamples || []))],
+    postExamples: [...new Set(results.flatMap((result) => result?.postExamples || []))],
+  };
+  return combined;
+};
+
+const readFileFromZip = async (zip, fileName) => {
+  try {
+    const buffer = await zip.entryData(fileName);
+    const content = buffer.toString('utf8');
+    return content;
+  } catch (error) {
+    logError(`Error reading file ${fileName} from zip:`, error);
+    throw error;
+  }
+};
+
+process.on('uncaughtException', (error) => {
+  logError('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logError('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+program
+  .option('--openai <api_key>', 'OpenAI API key')
+  .option('--claude <api_key>', 'Claude API key')
+  .parse(process.argv);
+
+const limitConcurrency = async (tasks, concurrencyLimit) => {
+  const results = [];
+  const runningTasks = new Set();
+  const queue = [...tasks];
+
+  const runNext = async () => {
+    if (queue.length === 0) return;
+    const task = queue.shift();
+    runningTasks.add(task);
+    try {
+      results.push(await task());
+    } catch (error) {
+      results.push(null);
+      logError('Error in concurrent task:', error);
+    } finally {
+      runningTasks.delete(task);
+      await runNext();
+    }
+  };
+
+  const initialTasks = Array(Math.min(concurrencyLimit, tasks.length))
+    .fill()
+    .map(() => runNext());
+
+  await Promise.all(initialTasks);
+  await Promise.all(Array.from(runningTasks));
+
+  return results;
+};
+
+const saveApiKey = (model, apiKey) => {
+  const envConfig = dotenv.parse(fs.readFileSync(envPath));
+  envConfig[`${model.toUpperCase()}_API_KEY`] = apiKey;
+  fs.writeFileSync(envPath, Object.entries(envConfig).map(([key, value]) => `${key}=${value}`).join('\n'));
+};
+
+const loadApiKey = (model) => {
+  const envConfig = dotenv.parse(fs.readFileSync(envPath));
+  return envConfig[`${model.toUpperCase()}_API_KEY`];
+};
+
+const getApiKey = async (model) => {
+  const envKey = process.env[`${model.toUpperCase()}_API_KEY`];
+  if (validateApiKey(envKey, model)) return envKey;
+
+  const cachedKey = loadApiKey(model);
+  if (validateApiKey(cachedKey, model)) return cachedKey;
+
+  let newKey = '';
+  while (!validateApiKey(newKey, model)) {
+    newKey = await promptForApiKey(model);
+  }
+  saveApiKey(model, newKey);
+  return newKey;
+};
+
+const validateApiKey = (apiKey, model) => {
+  if (!apiKey) return false;
+
+  if (model === 'openai') {
+    return apiKey.trim().startsWith('sk-');
+  } else if (model === 'claude') {
+    return apiKey.trim().length > 0;
+  }
+  return false;
+};
+
+const promptForApiKey = async (model) => {
+  return await promptUser(`Enter ${model.toUpperCase()} API key: `);
+};
+
+
+const resumeOrStartNewSession = async (projectCache, archivePath) => {
+  if (projectCache.unfinishedSession) {
+    const choice = await promptUser(
+      'An unfinished session was found. Continue? (Y/n): ',
+      'Y'
+    );
+    if (choice.toLowerCase() !== 'y') {
+      projectCache.unfinishedSession = null;
+      clearGenerationCache(archivePath);
+    }
+  }
+
+  if (!projectCache.unfinishedSession) {
+    projectCache.model = await promptUser('Select model (openai/claude): ');
+    projectCache.basicUserInfo = await promptUser('Enter additional user info that might help the summarizer (real name, nicknames and handles, age, past employment vs current, etc): ');
+    projectCache.unfinishedSession = {
+      currentChunk: 0,
+      totalChunks: 0,
+      completed: false
+    };
+  }
+
+  return projectCache;
+};
+
+const safeExecute = async (func, errorMessage) => {
+  try {
+    return await func();
+  } catch (error) {
+    logError(errorMessage, error);
+    throw error;
+  }
+};
+
+const saveCharacterData = (character) => {
+  fs.writeFileSync('character.json', JSON.stringify(character, null, 2));
+  console.log('Character data saved to character.json');
+};
+
+const main = async () => {
+  try {
+    let archivePath = program.args[0];
+
+    if (!archivePath) {
+      archivePath = await promptUser('Please provide the path to your Twitter archive zip file:');
+    }
+
+    let projectCache = loadProjectCache(archivePath) || {};
+
+    projectCache = await resumeOrStartNewSession(projectCache, archivePath);
+
+    const apiKey = await getApiKey(projectCache.model);
+    if (!apiKey) {
+      throw new Error(`Failed to get a valid API key for ${projectCache.model}`);
+    }
+    process.env[`${projectCache.model.toUpperCase()}_API_KEY`] = apiKey;
+
+    saveProjectCache(archivePath, projectCache);
+
+    const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+    progressBar.start(projectCache.unfinishedSession.totalChunks || 100, projectCache.unfinishedSession.currentChunk || 0);
+
+    await safeExecute(async () => {
+      const zip = new StreamZip.async({ file: archivePath });
+
+      try {
+        const accountData = JSON.parse((await readFileFromZip(zip, 'data/account.js')).replace('window.YTD.account.part0 = ', ''));
+
+        const tweets = JSON.parse((await readFileFromZip(zip, 'data/tweets.js')).replace('window.YTD.tweets.part0 = ', ''))
+          .map((item) => item.tweet)
+          .filter((tweet) => !tweet.retweeted);
+
+        const chunks = await chunkText(tweets, accountData, archivePath);
+
+        projectCache.unfinishedSession.totalChunks = chunks.length;
+        progressBar.setTotal(chunks.length);
+        const tasks = chunks.map((chunk, index) => async () => {
+          if (index < projectCache.unfinishedSession.currentChunk) {
+            return null; // Skip already processed chunks
+          }
+          const result = await extractInfo(accountData, chunk, index, archivePath, projectCache.model);
+          projectCache.unfinishedSession.currentChunk = index + 1;
+          progressBar.update(projectCache.unfinishedSession.currentChunk);
+          saveProjectCache(archivePath, projectCache);
+          return result;
+        });
+        const results = await limitConcurrency(tasks, 3); // Process 3 chunks concurrently
+
+        const validResults = results.filter(result => result !== null);
+        const combined = combineAndDeduplicate(validResults);
+
+        const character = {
+          name: accountData[0].account.accountDisplayName,
+          ...combined,
+        };
+
+        saveCharacterData(character);
+
+        return character;
+      } finally {
+        await zip.close();
+      }
+    }, 'Error generating character JSON');
+
+    progressBar.stop();
+
+    projectCache.unfinishedSession.completed = true;
+    saveProjectCache(archivePath, projectCache);
+    clearGenerationCache(archivePath);
+  } catch (error) {
+    console.error('Error during script execution:', error);
+    process.exit(1);
+  }
+};
+
+main();
+
+================
+File: .env.example
+================
+OPENAI_API_KEY= # OpenAI API key, starting with sk-
+CLAUDE_API_KEY= # Anthropic API key, starting with sk-
+
+================
+File: .gitignore
+================
+.env
+.DS_Store
+cache/
+logs/
+node_modules/
+*.zip
+twitter-*/
+model.gguf
+knowledge/
+output/
+whatsapp
+
+================
+File: .npmrc
+================
+node-options=--no-warnings
+
+================
+File: LICENSE
+================
+Modified MIT License
+
+Copyright (c) 2024 Shaw Walters, aka Moon aka @lalalune
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+MODIFICATION TO LICENSE
+In the standard MIT license, users must include the copyright notice and permission notice in all copies of the software. However, in this Modified MIT License, the above copyright notice and permission notice need not be included in any copies of the software. Instead, users must give reasonable credit to the software and copyright holder on public derivative works by mentioning, in their own license, that some of the work is derived from this software and is subject to the terms of this Modified MIT License.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+================
+File: package.json
+================
+{
+  "name": "characterfile",
+  "version": "0.0.7",
+  "description": "A file format for character files, complete with schema, examples and validators.",
+  "type": "module",
+  "types": "examples/types.d.ts",
+  "bin": {
+    "tweets2character": "scripts/tweets2character.js",
+    "folder2knowledge": "scripts/folder2knowledge.js",
+    "knowledge2character": "scripts/knowledge2character.js",
+    "chats2character": "scripts/chats2character.js"
+  },
+  "scripts": {
+    "tweets2character": "node scripts/tweets2character.js",
+    "folder2knowledge": "node scripts/folder2knowledge.js",
+    "knowledge2character": "node scripts/knowledge2character.js",
+    "chats2character": "node scripts/chats2character.js",
+    "example": "node examples/example.mjs",
+    "validate": "node examples/validate.mjs"
+  },
+  "author": "Shaw Walters (https://github.com/lalalune)",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.2",
+    "@opendocsg/pdf2md": "^0.1.31",
+    "adm-zip": "^0.5.16",
+    "cli-progress": "^3.12.0",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "inquirer": "^10.2.2",
+    "node-fetch": "^3.3.2",
+    "node-llama-cpp": "^3.0.0-beta.44",
+    "node-stream-zip": "^1.15.0",
+    "openai": "^4.79.1",
+    "systeminformation": "^5.23.5",
+    "tiktoken": "^1.0.16"
+  },
+  "peerDependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
+
+================
+File: README.md
+================
+# Characterfile
+
+The goal of this project is to create a simple, easy-to-use format for generating and transmitting character files. You can use these character files out of the box with [Eliza](https://github.com/elizaOS/eliza) or other LLM agents.
+
+## Getting Started - Generate A Characterfile From Your Twitter
+
+1. Open Terminal. On Mac, you can press Command + Spacebar and search for "Terminal". If you're using Windows, use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install)
+2. Type `npx tweets2character` and run it. If you get an error about npx not existing, you'll need to install Node.js
+3. If you need to install node, you can do that by pasting `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash` into your terminal to install Node Version Manager (nvm)
+4. Once that runs, make a new terminal window (the old one will not have the new software linked) and run `nvm install node` followed by `nvm use node`
+5. Now copy and paste `npx tweets2character` into your terminal again.
+6. NOTE: You will need to get a [Claude](https://console.anthropic.com/settings/keys) or [OpenAI](https://platform.openai.com/api-keys) API key. Paste that in when prompted
+7. You will need to get the path of your Twitter archive. If it's in your Downloads folder on a Mac, that's ~/Downloads/<name of archive>.zip
+8. If everything is correct, you'll see a loading bar as the script processes your tweets and generates a character file. This will be output at character.json in the directory where you run `npx tweets2character`. If you run the command `cd` in the terminal before or after generating the file, you should see where you are.
+
+## Schema
+
+The JSON schema for the character file is [here](schema/character.schema.json). This also matches the expected format for [OpenAI function calling](https://platform.openai.com/docs/guides/function-calling).
+
+Typescript types for the character file are [here](examples/types.d.ts).
+
+## Examples
+
+### Example Character file
+Basic example of a character file, with values that are instructional
+[examples/example.character.json](examples/example.character.json)
+
+### Basic Python Example
+Read the example character file and print the contents
+[examples/example.py](examples/example.py)
+
+### Python Validation Example
+Read the example character file and validate it against the JSON schema
+[examples/validate.py](examples/validate.py)
+
+### Basic JavaScript Example
+Read the example character file and print the contents
+[examples/example.mjs](examples/example.mjs)
+
+### JavScript Validation Example
+Read the example character file and validate it against the JSON schema
+[examples/validate.mjs](examples/validate.mjs)
+
+# Scripts
+
+You can use the scripts the generate a character file from your tweets, convert a folder of documents into a knowledge file, and add knowledge to your character file.
+
+Most of these scripts require an OpenAI or Anthropic API key.
+
+## tweets2character
+
+Convert your twitter archive into a .character.json
+
+First, download your Twitter archive here: https://help.x.com/en/managing-your-account/how-to-download-your-x-archive
+
+You can run tweets2character directly from your command line with no downloads:
+
+```sh
+npx tweets2character
+```
+
+Note: you will need node.js installed. The easiest way is with [nvm](https://github.com/nvm-sh/nvm).
+
+Then clone this repo and run these commands:
+
+```sh
+npm install
+node scripts/tweets2character.js twitter-2024-07-22-aed6e84e05e7976f87480bc36686bd0fdfb3c96818c2eff2cebc4820477f4da3.zip # path to your zip archive
+```
+
+Note that the arguments are optional and will be prompted for if not provided.
+
+## folder2knowledge
+
+Convert a folder of images and videos into a .knowledge file which you can use with [Eliza](https://github.com/lalalune/eliza). Will convert text, markdown and PDF into normalized text in JSON format.
+
+You can run folder2knowledge directly from your command line with no downloads:
+
+```sh
+npx folder2knowledge <path/to/folder>
+```
+
+```sh
+npm install
+node scripts/folder2knowledge.js path/to/folder # path to your folder
+```
+
+Note that the arguments are optional and will be prompted for if not provided.
+
+## knowledge2character
+
+Add knowledge to your .character file from a generated knowledge.json file.
+
+You can run knowledge2character directly from your command line with no downloads:
+
+```sh
+npx knowledge2character <path/to/character.character> <path/to/knowledge.knowledge>
+```
+
+```sh
+npm install
+node scripts/knowledge2character.js path/to/character.character path/to/knowledge.knowledge # path to your character file and knowledge file
+```
+
+Note that the arguments are optional and will be prompted for if not provided.
+
+## Chat Export Processing
+
+Process WhatsApp chat exports to create character profiles.
+
+You can run chats2character directly from your command line with no downloads:
+
+npx chats2character -f path/to/chat.txt -u "Username"
+npx chats2character -d path/to/chats/dir -u "John Doe"
+
+Or if you have cloned the repo:
+
+npm install
+node scripts/chats2character.js -f path/to/chat.txt -u "Username"
+node scripts/chats2character.js -d path/to/chats/dir -u "John Doe"
+
+Options:
+-u, --user           Target username as it appears in chats (use quotes for names with spaces)
+-f, --file           Path to single chat export file
+-d, --dir            Path to directory containing chat files
+-i, --info           Path to JSON file containing additional user information
+-l, --list           List all users found in chats
+--openai [api_key]   Use OpenAI model (optionally provide API key)
+--claude [api_key]   Use Claude model (default, optionally provide API key)
+
+Examples:
+# Provide API key directly:
+npx chats2character -d whatsapp/chats --openai sk-...
+npx chats2character -d whatsapp/chats --claude sk-...
+
+# Use stored/cached API key:
+npx chats2character -d whatsapp/chats --openai
+npx chats2character -d whatsapp/chats --claude
+
+The script will look for API keys in the following order:
+1. Command line argument if provided
+2. Environment variables (OPENAI_API_KEY or CLAUDE_API_KEY)
+3. Cached keys in ~/.eliza/.env
+4. Prompt for key if none found
+
+Example user info file (info.txt):
+The user is a mother of two, currently living in Madrid. She works as a high school teacher
+and has been teaching mathematics for over 15 years. She's very active in the school's
+parent association and often organizes educational events. In her free time, she enjoys
+gardening and cooking traditional Spanish recipes.
+
+The file should be a plain text file with descriptive information about the user. This
+information helps provide context to better understand and analyze the chat messages.
+
+The script will:
+1. Extract messages from the specified user
+2. Process content in chunks
+3. Generate a character profile
+4. Save results to character.json
+
+Note: WhatsApp chat exports should be in .txt format with standard WhatsApp export formatting:
+[timestamp] Username: message
+
+For usernames with spaces, make sure to use quotes:
+[timestamp] John Doe: message
+
+# License
+
+The license is the MIT license, with slight modifications so that users are not required to include the full license in their own software. See [LICENSE](LICENSE) for more details.
+
+
+
+================================================================
+End of Codebase
+================================================================
