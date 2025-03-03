@@ -1,0 +1,50 @@
+{
+    "mcpServers": {
+        "puppeteer": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-puppeteer"
+            ]
+        },
+        "brave-search": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-brave-search"
+            ],
+            "env": {
+                "BRAVE_API_KEY": "BSANX1XWB-6Nq4ivJJWRCTd15P3sWwT"
+            }
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        },
+        "webresearch": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@mzxrai/mcp-webresearch@latest"
+            ]
+        },
+        "browser-tools-mcp": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@agentdeskai/browser-tools-mcp@1.0.11"
+            ]
+        },
+        "supabase": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://postgres.eljhxykcoeybvtodgtnh:ruxsud-heTko3-hifvov@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+            ]
+        }
+    }
+}

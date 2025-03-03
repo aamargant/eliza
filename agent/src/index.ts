@@ -361,12 +361,12 @@ export async function loadCharacters(
         elizaLogger.info("No characters found, using default characters");
         loadedCharacters.push(
             RookieClientInterface,
-            ArchitectClientInterface,
-            SimsaiClientInterface,
-            C3POClientInterface,
-            CosmosHelperClientInterface,
-            DobbyClientInterface,
-            SBFClientInterface
+            ArchitectClientInterface
+            // SimsaiClientInterface,
+            // C3POClientInterface,
+            // CosmosHelperClientInterface,
+            // DobbyClientInterface,
+            // SBFClientInterface
         );
     }
 
@@ -821,12 +821,12 @@ const startAgents = async () => {
     const charactersArg = args.characters || args.character;
     let characters = [
         RookieClientInterface,
-        ArchitectClientInterface,
-        SimsaiClientInterface,
-        C3POClientInterface,
-        CosmosHelperClientInterface,
-        DobbyClientInterface,
-        SBFClientInterface,
+        ArchitectClientInterface
+        // SimsaiClientInterface,
+        // C3POClientInterface,
+        // CosmosHelperClientInterface,
+        // DobbyClientInterface,
+        // SBFClientInterface,
     ];
 
     if (charactersArg || hasValidRemoteUrls()) {

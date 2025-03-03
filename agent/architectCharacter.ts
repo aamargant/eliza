@@ -5,7 +5,7 @@ export const ArchitectClientInterface: Character = {
     username: "BlueprintChen",
     modelProvider: ModelProviderName.OPENROUTER,
     settings: {
-        ragKnowledge: false,
+        ragKnowledge: true,
         voice: {
             model: "en_US-neural-multivoice",
         },
@@ -41,7 +41,9 @@ export const ArchitectClientInterface: Character = {
         [
             {
                 user: "{{user1}}",
-                content: { text: "How should we handle the increasing load on our authentication service?" },
+                content: {
+                    text: "How should we handle the increasing load on our authentication service?",
+                },
             },
             {
                 user: "Alex",
@@ -124,4 +126,4 @@ export const ArchitectClientInterface: Character = {
         sttLanguage: "en",
         speakerMaxDurationMs: 300000,
     },
-}; 
+};

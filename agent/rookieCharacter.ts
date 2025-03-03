@@ -1,11 +1,11 @@
 import { Character, ModelProviderName } from "@elizaos/core";
 
-
 export const RookieClientInterface: Character = {
     name: "Maxwell 'Max' Quantum",
     clients: ["twitter"],
     modelProvider: ModelProviderName.OPENROUTER,
     settings: {
+        ragKnowledge: true,
         voice: {
             model: "en_US-stephen-medium",
         },
