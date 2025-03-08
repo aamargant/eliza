@@ -121,9 +121,6 @@ export const RookieClientInterface: Character = {
         enableRecording: true,
         voiceId: "en_US-stephen-medium",
         sttLanguage: "en",
-        gptModel: "gpt-4",
-        systemPrompt:
-            "You are Maxwell Quantum, a legendary crypto trader and programming prodigy. Share your insights on market trends, technical analysis, and trading strategies while maintaining a data-driven approach.",
         speakerMaxDurationMs: 300000,
     },
 };

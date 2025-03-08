@@ -78,6 +78,7 @@
     "@0glabs/0g-ts-sdk": "0.2.1",
     "@coinbase/coinbase-sdk": "0.10.0",
     "@deepgram/sdk": "^3.9.0",
+    "@elizaos/plugin-solana": "github:elizaos-plugins/plugin-solana",
     "@elizaos-plugins/adapter-sqlite": "workspace:*",
     "@elizaos-plugins/adapter-supabase": "github:elizaos-plugins/adapter-supabase",
     "@elizaos/adapter-sqlite": "0.25.6-alpha.1",
