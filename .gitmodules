@@ -1,3 +1,33 @@
 [submodule "characters"]
 	path = characters
 	url = https://github.com/elizaos/characters
+[submodule "packages/plugin-twitter"]
+	path = packages/plugin-twitter
+	url = https://github.com/elizaos-plugins/plugin-twitter
+[submodule "packages/plugin-evm"]
+	path = packages/plugin-evm
+	url = https://github.com/elizaos-plugins/plugin-evm
+[submodule "packages/plugin-solana"]
+	path = packages/plugin-solana
+	url = https://github.com/elizaos-plugins/plugin-solana
+[submodule "packages/plugin-tee"]
+	path = packages/plugin-tee
+	url = https://github.com/elizaos-plugins/plugin-tee
+[submodule "packages/plugin-trustdb"]
+	path = packages/plugin-trustdb
+	url = https://github.com/elizaos-plugins/plugin-trustdb
+[submodule "packages/plugin-trustgo"]
+	path = packages/plugin-trustgo
+	url = https://github.com/elizaos-plugins/plugin-trustgo
+[submodule "packages/plugin-web-search"]
+	path = packages/plugin-web-search
+	url = https://github.com/elizaos-plugins/plugin-web-search
+[submodule "packages/plugin-youtube-to-text"]
+	path = packages/plugin-youtube-to-text
+	url = https://github.com/elizaos-plugins/plugin-youtube-to-text
+[submodule "packages/adapter-supabase"]
+	path = packages/adapter-supabase
+	url = https://github.com/elizaos-plugins/adapter-supabase
+[submodule "packages/client-telegram"]
+	path = packages/client-telegram
+	url = https://github.com/elizaos-plugins/client-telegram
